@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Implemented Claude Code review execution with Reviewer interface and claudeReviewer implementation
+container: pr-reviewer-004-review-execution
+dark-factory-version: v0.14.5
+created: "2026-03-04T14:16:45Z"
+queued: "2026-03-04T14:16:45Z"
+started: "2026-03-04T14:16:45Z"
+completed: "2026-03-04T14:22:42Z"
+---
 <objective>
 Implement Claude Code review execution. Run `claude` CLI in a worktree directory to produce a code review using the repo's CLAUDE.md and project context. Capture the review output for posting.
 </objective>
