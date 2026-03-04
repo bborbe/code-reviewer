@@ -108,9 +108,12 @@ var _ = Describe("Config", func() {
 				Expect(err).To(BeNil())
 			})
 
-			It("ResolvedGitHubToken falls back to default env var and returns empty when unset", func() {
-				Expect(cfg.ResolvedGitHubToken()).To(Equal(""))
-			})
+			It(
+				"ResolvedGitHubToken falls back to default env var and returns empty when unset",
+				func() {
+					Expect(cfg.ResolvedGitHubToken()).To(Equal(""))
+				},
+			)
 		})
 
 		Context("without github section but default env var set", func() {

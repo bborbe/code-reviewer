@@ -26,6 +26,7 @@ type GitHubConfig struct {
 const DefaultModel = "sonnet"
 
 // DefaultGitHubToken is the default env var reference for the GitHub token.
+// #nosec G101 -- not a credential, just an env var reference template
 const DefaultGitHubToken = "${PR_REVIEWER_GITHUB_TOKEN}"
 
 // Config holds the pr-reviewer configuration.

@@ -46,7 +46,7 @@ repos:
 
 ```yaml
 github:
-  token: ${GITHUB_TOKEN}  # optional: use env var reference or literal token
+  token: ${PR_REVIEWER_GITHUB_TOKEN}  # optional: env var reference (this is also the default)
 model: sonnet             # optional: claude model (default: sonnet)
 repos:
   - url: https://github.com/bborbe/teamvault-docker
@@ -82,4 +82,4 @@ repos:
 
 ## License
 
-BSD 3-Clause License. See [LICENSE](LICENSE) file for details.
+BSD 2-Clause License. See [LICENSE](LICENSE) file for details.
