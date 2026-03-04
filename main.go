@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -22,6 +23,14 @@ import (
 )
 
 func main() {
+	// Parse flags
+	verbose := flag.Bool("v", false, "enable verbose output")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: pr-reviewer [-v] <pr-url>\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT,
@@ -29,20 +38,21 @@ func main() {
 	)
 	defer cancel()
 
-	if err := run(ctx); err != nil {
+	if err := run(ctx, *verbose); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, verbose bool) error {
 	// Parse args
-	if len(os.Args) < 2 {
-		return fmt.Errorf("usage: pr-reviewer <pr-url>")
+	if flag.NArg() < 1 {
+		return fmt.Errorf("usage: pr-reviewer [-v] <pr-url>")
 	}
-	rawURL := os.Args[1]
+	rawURL := flag.Arg(0)
 
 	// Parse PR URL
+	logVerbose(verbose, "parsing URL: %s", rawURL)
 	prInfo, err := github.ParsePRURL(rawURL)
 	if err != nil {
 		return err
@@ -50,6 +60,7 @@ func run(ctx context.Context) error {
 
 	// Load config
 	configPath := "~/.pr-reviewer.yaml"
+	logVerbose(verbose, "loading config: %s", configPath)
 	loader := config.NewFileLoader(configPath)
 	cfg, err := loader.Load(ctx)
 	if err != nil {
@@ -64,6 +75,7 @@ func run(ctx context.Context) error {
 
 	// Expand home directory in path
 	repoPath := expandHome(repoInfo.Path)
+	logVerbose(verbose, "repo: %s", repoPath)
 
 	// Check if token is configured but env var is empty
 	if cfg.GitHub.Token != "" && cfg.ResolvedGitHubToken() == "" {
@@ -80,6 +92,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(ctx, err, "get PR branch failed")
 	}
+	logVerbose(verbose, "fetching branch: %s", branch)
 
 	// Fetch latest changes
 	if err := worktreeManager.Fetch(ctx, repoPath); err != nil {
@@ -91,6 +104,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(ctx, err, "create worktree failed")
 	}
+	logVerbose(verbose, "created worktree: %s", worktreePath)
 
 	// Ensure cleanup on exit
 	defer func() {
@@ -108,8 +122,32 @@ func run(ctx context.Context) error {
 		}
 	}()
 
+	// Run review and post comment
+	return runReviewAndPost(
+		ctx,
+		verbose,
+		reviewer,
+		ghClient,
+		worktreePath,
+		repoInfo.ReviewCommand,
+		prInfo,
+	)
+}
+
+// runReviewAndPost executes the review and posts the comment.
+func runReviewAndPost(
+	ctx context.Context,
+	verbose bool,
+	reviewer review.Reviewer,
+	ghClient github.Client,
+	worktreePath string,
+	reviewCommand string,
+	prInfo *github.PRInfo,
+) error {
 	// Run review
-	reviewText, err := reviewer.Review(ctx, worktreePath, repoInfo.ReviewCommand)
+	logAlways("reviewing PR #%d (%s/%s)...", prInfo.Number, prInfo.Owner, prInfo.Repo)
+	logVerbose(verbose, "running review... (this may take a few minutes)")
+	reviewText, err := reviewer.Review(ctx, worktreePath, reviewCommand)
 	if err != nil {
 		return errors.Wrap(ctx, err, "review failed")
 	}
@@ -118,6 +156,7 @@ func run(ctx context.Context) error {
 	fmt.Println(reviewText)
 
 	// Post comment
+	logAlways("posting comment...")
 	if err := ghClient.PostComment(
 		ctx,
 		prInfo.Owner,
@@ -128,7 +167,20 @@ func run(ctx context.Context) error {
 		return errors.Wrap(ctx, err, "post comment failed")
 	}
 
+	logAlways("done")
 	return nil
+}
+
+// logAlways logs a message to stderr in both normal and verbose mode.
+func logAlways(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
+}
+
+// logVerbose logs a message to stderr only in verbose mode.
+func logVerbose(verbose bool, format string, args ...interface{}) {
+	if verbose {
+		fmt.Fprintf(os.Stderr, format+"\n", args...)
+	}
 }
 
 // expandHome expands ~ to the user's home directory.

@@ -1,5 +1,5 @@
 <objective>
-Add configurable Claude model with default claude-sonnet-4-6. Always pass --model flag to claude CLI.
+Add configurable Claude model with default sonnet. Always pass --model flag to claude CLI.
 </objective>
 
 <context>
@@ -11,7 +11,7 @@ Precondition: pkg/config, pkg/review, main.go exist and are tested.
 <requirements>
 1. Update `Config` in `pkg/config/config.go`:
    - Add `Model string \`yaml:"model"\`` field to `Config`
-   - Add constant `DefaultModel = "claude-sonnet-4-6"`
+   - Add constant `DefaultModel = "sonnet"`
    - Add method `ResolvedModel() string` — returns Model if non-empty, else DefaultModel
 
 2. Update `Reviewer.Review` in `pkg/review/review.go`:
@@ -22,7 +22,7 @@ Precondition: pkg/config, pkg/review, main.go exist and are tested.
    - Pass `cfg.ResolvedModel()` to reviewer.Review
 
 4. Update tests:
-   - Config test: no model field → ResolvedModel() returns "claude-sonnet-4-6"
+   - Config test: no model field → ResolvedModel() returns "sonnet"
    - Config test: model field set → ResolvedModel() returns configured value
    - Review mock: update to match new interface signature
 
@@ -30,7 +30,7 @@ Precondition: pkg/config, pkg/review, main.go exist and are tested.
 </requirements>
 
 <constraints>
-- Default model is always claude-sonnet-4-6
+- Default model is always sonnet
 - --model flag always passed to claude CLI (never omitted)
 - Backward compatible — existing configs without model field use default
 - Use Ginkgo v2 + Gomega for tests
@@ -45,7 +45,7 @@ Run `make precommit` -- must pass.
 
 <success_criteria>
 - model field parsed from config YAML
-- Default claude-sonnet-4-6 when not specified
+- Default sonnet when not specified
 - --model always passed to claude CLI
 - Existing configs without model field still work
 - make precommit passes

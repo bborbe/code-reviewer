@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Added progress logging to stderr with -v verbose flag
+container: pr-reviewer-009-verbose-progress-logging
+dark-factory-version: v0.14.5
+created: "2026-03-04T20:53:29Z"
+queued: "2026-03-04T20:53:29Z"
+started: "2026-03-04T20:53:29Z"
+completed: "2026-03-04T20:58:46Z"
+---
 <objective>
 Add progress logging to stderr so the user knows pr-reviewer is alive during long operations. Default shows minimal output, -v flag shows detailed steps.
 </objective>
