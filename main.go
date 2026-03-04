@@ -55,14 +55,14 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	// Find local repo path
-	repoPath, err := cfg.FindRepoPath(prInfo.RepoURL)
+	// Find local repo information
+	repoInfo, err := cfg.FindRepo(prInfo.RepoURL)
 	if err != nil {
 		return err
 	}
 
 	// Expand home directory in path
-	repoPath = expandHome(repoPath)
+	repoPath := expandHome(repoInfo.Path)
 
 	// Initialize components
 	ghClient := github.NewGHClient()
@@ -103,7 +103,7 @@ func run(ctx context.Context) error {
 	}()
 
 	// Run review
-	reviewText, err := reviewer.Review(ctx, worktreePath)
+	reviewText, err := reviewer.Review(ctx, worktreePath, repoInfo.ReviewCommand)
 	if err != nil {
 		return errors.Wrap(ctx, err, "review failed")
 	}

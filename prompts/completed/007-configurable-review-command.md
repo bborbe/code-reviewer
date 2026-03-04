@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Made Claude review command configurable per repo with default /code-review
+container: pr-reviewer-007-configurable-review-command
+dark-factory-version: v0.14.5
+created: "2026-03-04T19:13:19Z"
+queued: "2026-03-04T19:13:19Z"
+started: "2026-03-04T19:13:19Z"
+completed: "2026-03-04T19:19:26Z"
+---
 <objective>
 Make the Claude review command configurable per repo in the config file. Default to "/code-review" if not specified.
 </objective>

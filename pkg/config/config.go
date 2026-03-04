@@ -22,8 +22,15 @@ type Config struct {
 
 // RepoConfig maps a repository URL to a local path.
 type RepoConfig struct {
-	URL  string `yaml:"url"`
-	Path string `yaml:"path"`
+	URL           string `yaml:"url"`
+	Path          string `yaml:"path"`
+	ReviewCommand string `yaml:"reviewCommand"`
+}
+
+// RepoInfo holds repository information including path and review command.
+type RepoInfo struct {
+	Path          string
+	ReviewCommand string
 }
 
 // Loader loads configuration from a source.
@@ -97,6 +104,28 @@ func (c *Config) FindRepoPath(repoURL string) (string, error) {
 	}
 
 	return "", fmt.Errorf("repo not found in config, add to ~/.pr-reviewer.yaml: %s", repoURL)
+}
+
+// FindRepo looks up the repository information including path and review command.
+// Returns RepoInfo with path and reviewCommand. If reviewCommand is not specified,
+// defaults to "/code-review".
+func (c *Config) FindRepo(repoURL string) (*RepoInfo, error) {
+	normalizedURL := normalizeURL(repoURL)
+
+	for _, repo := range c.Repos {
+		if normalizeURL(repo.URL) == normalizedURL {
+			reviewCmd := repo.ReviewCommand
+			if reviewCmd == "" {
+				reviewCmd = "/code-review"
+			}
+			return &RepoInfo{
+				Path:          repo.Path,
+				ReviewCommand: reviewCmd,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("repo not found in config, add to ~/.pr-reviewer.yaml: %s", repoURL)
 }
 
 func normalizeURL(url string) string {

@@ -47,7 +47,7 @@ var _ = Describe("ClaudeReviewer", func() {
 				// Create empty temp directory
 				tempDir := GinkgoT().TempDir()
 
-				_, err := reviewer.Review(ctx, tempDir)
+				_, err := reviewer.Review(ctx, tempDir, "/code-review")
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).To(Equal("claude not found in PATH"))
 			})
@@ -57,7 +57,7 @@ var _ = Describe("ClaudeReviewer", func() {
 			It("returns error", func() {
 				// If claude exists in PATH, it will fail with a different error
 				// If claude doesn't exist, it will fail with "claude not found in PATH"
-				_, err := reviewer.Review(ctx, "/nonexistent/path/to/worktree")
+				_, err := reviewer.Review(ctx, "/nonexistent/path/to/worktree", "/code-review")
 				Expect(err).NotTo(BeNil())
 			})
 		})
@@ -109,7 +109,7 @@ exit 0
 				It("returns review text from stdout", func() {
 					worktreeDir := GinkgoT().TempDir()
 
-					result, err := reviewer.Review(ctx, worktreeDir)
+					result, err := reviewer.Review(ctx, worktreeDir, "/code-review")
 					Expect(err).To(BeNil())
 					Expect(result).To(Equal("Code review output\n"))
 				})
@@ -137,7 +137,7 @@ exit 1
 				It("returns error with stderr content", func() {
 					worktreeDir := GinkgoT().TempDir()
 
-					_, err := reviewer.Review(ctx, worktreeDir)
+					_, err := reviewer.Review(ctx, worktreeDir, "/code-review")
 					Expect(err).NotTo(BeNil())
 					Expect(err.Error()).To(ContainSubstring("claude review failed"))
 					Expect(err.Error()).To(ContainSubstring("Error: something went wrong"))
@@ -165,9 +165,42 @@ exit 0
 				It("returns empty string", func() {
 					worktreeDir := GinkgoT().TempDir()
 
-					result, err := reviewer.Review(ctx, worktreeDir)
+					result, err := reviewer.Review(ctx, worktreeDir, "/code-review")
 					Expect(err).To(BeNil())
 					Expect(result).To(Equal(""))
+				})
+			})
+
+			Context("with custom review command", func() {
+				BeforeEach(func() {
+					// Create mock claude script that verifies the command parameter
+					scriptContent := `#!/bin/sh
+if [ "$2" = "/custom-review" ]; then
+  echo "Custom review output"
+  exit 0
+else
+  echo "Expected /custom-review but got $2" >&2
+  exit 1
+fi
+`
+					// #nosec G306 -- test file: mock executable script needs execute permissions
+					err := os.WriteFile(mockScript, []byte(scriptContent), 0750)
+					Expect(err).To(BeNil())
+
+					// Prepend bin dir to PATH
+					err = os.Setenv(
+						"PATH",
+						filepath.Join(tempDir, "bin")+string(os.PathListSeparator)+originalPATH,
+					)
+					Expect(err).To(BeNil())
+				})
+
+				It("passes custom command correctly", func() {
+					worktreeDir := GinkgoT().TempDir()
+
+					result, err := reviewer.Review(ctx, worktreeDir, "/custom-review")
+					Expect(err).To(BeNil())
+					Expect(result).To(Equal("Custom review output\n"))
 				})
 			})
 		})
