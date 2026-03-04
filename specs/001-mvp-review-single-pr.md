@@ -3,7 +3,7 @@ tags:
   - dark-factory
   - spec
 ---
-Tags: [[Dark Factory - Prompt Strategy Guide]]
+Tags: [[Dark Factory - Spec Writing Guide]]
 
 ---
 
@@ -13,7 +13,7 @@ No tool exists to review pull requests using the local Claude Code CLI with full
 
 ## Goal
 
-After completion, a Go CLI tool `pr-reviewer` accepts a single GitHub PR URL, resolves the repo to a local checkout via config, creates a temporary git worktree for the PR branch, runs Claude Code `/code-review` in that worktree, and posts the review as a comment on the PR.
+After completion, a Go CLI tool `pr-reviewer` accepts a single GitHub PR URL, resolves the repo to a local checkout via config, creates a temporary git worktree for the PR branch, runs a Claude Code review in that worktree, and posts the review as a comment on the PR.
 
 ## Non-goals
 
@@ -28,12 +28,12 @@ After completion, a Go CLI tool `pr-reviewer` accepts a single GitHub PR URL, re
 
 1. User runs `pr-reviewer <URL>` where URL is a GitHub PR
 2. Tool parses the URL to extract owner, repo, and PR number
-3. Tool looks up the local repo path from `~/.pr-reviewer.yaml` config
-4. Tool fetches the PR metadata (source branch) via `gh pr view`
+3. Tool looks up the local repo path from config
+4. Tool fetches the PR metadata (source branch) via GitHub API
 5. Tool runs `git fetch` in the local repo to ensure branches are up to date
-6. Tool creates a git worktree at a temp path for the PR's source branch
-7. Tool runs `claude --print "/code-review"` in the worktree directory — this picks up the repo's CLAUDE.md and all project-specific context
-8. Tool posts the Claude output as a PR comment via `gh pr comment`
+6. Tool creates a git worktree for the PR's source branch
+7. Tool runs Claude Code review in the worktree directory — picks up the repo's CLAUDE.md and all project-specific context
+8. Tool posts the review output as a PR comment via GitHub API
 9. Tool removes the git worktree and cleans up
 10. Tool exits 0 on success, non-zero on failure with clear error message
 
@@ -41,9 +41,9 @@ After completion, a Go CLI tool `pr-reviewer` accepts a single GitHub PR URL, re
 
 - Config file location: `~/.pr-reviewer.yaml`
 - Must use `gh` CLI for GitHub operations (already authenticated)
+- Must use `claude` CLI for reviews — not the SDK, not the API directly
 - Must use `git worktree add/remove` — never checkout in the main working tree
-- Must use `claude` CLI — not the SDK, not the API directly
-- Worktree path: `<repo-path>/.worktrees/pr-review-<pr-number>` (inside repo, not /tmp)
+- Worktree must be inside the repo directory, not in /tmp
 - Always clean up worktree on exit (including on error/signal)
 
 ## Config Format
@@ -71,12 +71,16 @@ Repo URL for config lookup: `https://github.com/{owner}/{repo}`
 
 | Trigger | Expected behavior | Recovery |
 |---------|-------------------|----------|
+| No arguments | Exit 1 with usage message | User provides URL |
 | Unknown URL format | Exit 1 with "unsupported URL format: <url>" | User fixes URL |
+| Config file doesn't exist | Exit 1 with "config not found: ~/.pr-reviewer.yaml" | User creates config |
+| Config file invalid YAML | Exit 1 with parse error | User fixes config |
 | Repo not in config | Exit 1 with "repo not found in config, add to ~/.pr-reviewer.yaml: <url>" | User adds mapping |
 | Local path doesn't exist | Exit 1 with "local path not found: <path>" | User clones repo |
 | Local path not a git repo | Exit 1 with "not a git repo: <path>" | User checks path |
 | git fetch fails | Exit 1 with git error | User checks network/auth |
 | PR branch not found after fetch | Exit 1 with "branch not found: <branch>" | User checks PR is open |
+| Worktree already exists (stale) | Remove stale worktree, then create fresh | Automatic |
 | Worktree creation fails | Exit 1 with git error | User checks for conflicts |
 | claude CLI not found | Exit 1 with "claude not found in PATH" | User installs Claude Code |
 | claude exits non-zero | Exit 1 with claude's stderr | User investigates |
@@ -93,7 +97,9 @@ Repo URL for config lookup: `https://github.com/{owner}/{repo}`
 
 - [ ] `pr-reviewer https://github.com/bborbe/teamvault-docker/pull/4` produces a review comment on the PR
 - [ ] Unknown URL exits 1 with helpful message
+- [ ] Missing config file exits 1 with helpful message
 - [ ] Missing repo in config exits 1 with helpful message
+- [ ] Stale worktree from previous run is cleaned up automatically
 - [ ] Worktree is cleaned up after success
 - [ ] Worktree is cleaned up after failure
 - [ ] Worktree is cleaned up after SIGINT
