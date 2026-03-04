@@ -23,19 +23,24 @@ var _ = Describe("Client", func() {
 	})
 
 	Context("NewGHClient", func() {
-		It("creates a non-nil client", func() {
-			client := github.NewGHClient()
+		It("creates a non-nil client with empty token", func() {
+			client := github.NewGHClient("")
+			Expect(client).NotTo(BeNil())
+		})
+
+		It("creates a non-nil client with token", func() {
+			client := github.NewGHClient("test-token")
 			Expect(client).NotTo(BeNil())
 		})
 
 		It("implements Client interface", func() {
-			var _ github.Client = github.NewGHClient()
+			var _ github.Client = github.NewGHClient("")
 		})
 	})
 
 	Context("GetPRBranch", func() {
 		It("requires valid context", func() {
-			client := github.NewGHClient()
+			client := github.NewGHClient("")
 			_, err := client.GetPRBranch(ctx, "owner", "repo", 123)
 			// Will fail in test env without gh CLI, but validates interface contract
 			Expect(err).To(HaveOccurred())
@@ -44,7 +49,7 @@ var _ = Describe("Client", func() {
 
 	Context("PostComment", func() {
 		It("requires valid context", func() {
-			client := github.NewGHClient()
+			client := github.NewGHClient("")
 			err := client.PostComment(ctx, "owner", "repo", 123, "test comment")
 			// Will fail in test env without gh CLI, but validates interface contract
 			Expect(err).To(HaveOccurred())

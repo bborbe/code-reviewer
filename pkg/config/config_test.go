@@ -90,6 +90,97 @@ var _ = Describe("Config", func() {
 			})
 		})
 
+		Context("without github section", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithoutGithub := `repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithoutGithub), 0600)
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It("ResolvedGitHubToken returns empty string", func() {
+				Expect(cfg.ResolvedGitHubToken()).To(Equal(""))
+			})
+		})
+
+		Context("with github.token as env var reference", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithEnvVar := `github:
+  token: ${TEST_PR_REVIEWER_TOKEN}
+repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithEnvVar), 0600)
+				Expect(err).To(BeNil())
+			})
+
+			Context("when env var is set", func() {
+				BeforeEach(func() {
+					err := os.Setenv("TEST_PR_REVIEWER_TOKEN", "test-token-value")
+					Expect(err).To(BeNil())
+				})
+
+				AfterEach(func() {
+					err := os.Unsetenv("TEST_PR_REVIEWER_TOKEN")
+					Expect(err).To(BeNil())
+				})
+
+				It("returns no error", func() {
+					Expect(err).To(BeNil())
+				})
+
+				It("ResolvedGitHubToken returns the env var value", func() {
+					Expect(cfg.ResolvedGitHubToken()).To(Equal("test-token-value"))
+				})
+			})
+
+			Context("when env var is not set", func() {
+				BeforeEach(func() {
+					err := os.Unsetenv("TEST_PR_REVIEWER_TOKEN")
+					Expect(err).To(BeNil())
+				})
+
+				It("returns no error", func() {
+					Expect(err).To(BeNil())
+				})
+
+				It("ResolvedGitHubToken returns empty string", func() {
+					Expect(cfg.ResolvedGitHubToken()).To(Equal(""))
+				})
+			})
+		})
+
+		Context("with github.token as literal value", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithLiteral := `github:
+  token: literal-token-value
+repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithLiteral), 0600)
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It("ResolvedGitHubToken returns the literal value", func() {
+				Expect(cfg.ResolvedGitHubToken()).To(Equal("literal-token-value"))
+			})
+		})
+
 		Context("with missing file", func() {
 			BeforeEach(func() {
 				configPath = filepath.Join(tmpDir, "nonexistent.yaml")

@@ -7,17 +7,25 @@ package config
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/bborbe/errors"
 	"gopkg.in/yaml.v3"
 )
 
+// GitHubConfig holds GitHub-specific configuration.
+type GitHubConfig struct {
+	Token string `yaml:"token"`
+}
+
 // Config holds the pr-reviewer configuration.
 type Config struct {
-	Repos []RepoConfig `yaml:"repos"`
+	GitHub GitHubConfig `yaml:"github"`
+	Repos  []RepoConfig `yaml:"repos"`
 }
 
 // RepoConfig maps a repository URL to a local path.
@@ -31,6 +39,24 @@ type RepoConfig struct {
 type RepoInfo struct {
 	Path          string
 	ReviewCommand string
+}
+
+// resolveEnvVar resolves environment variable references in the format ${VAR_NAME}.
+// If the value matches this pattern, it returns the value of the env var.
+// Otherwise, it returns the value as-is.
+func resolveEnvVar(value string) string {
+	// Match ${VAR_NAME} pattern
+	re := regexp.MustCompile(`^\$\{([A-Z_][A-Z0-9_]*)\}$`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) == 2 {
+		return os.Getenv(matches[1])
+	}
+	return value
+}
+
+// ResolvedGitHubToken returns the GitHub token with environment variable resolution.
+func (c *Config) ResolvedGitHubToken() string {
+	return resolveEnvVar(c.GitHub.Token)
 }
 
 // Loader loads configuration from a source.
@@ -59,6 +85,18 @@ func (l *fileLoader) Load(ctx context.Context) (*Config, error) {
 			return nil, errors.Wrapf(ctx, err, "config not found: %s", expandedPath)
 		}
 		return nil, errors.Wrapf(ctx, err, "read config file failed")
+	}
+
+	// Check file permissions - warn if world-readable
+	fileInfo, err := os.Stat(expandedPath)
+	if err == nil {
+		mode := fileInfo.Mode()
+		if mode&0004 != 0 {
+			log.Printf(
+				"warning: config file is world-readable, consider: chmod 600 %s",
+				expandedPath,
+			)
+		}
 	}
 
 	var cfg Config

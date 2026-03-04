@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -64,8 +65,13 @@ func run(ctx context.Context) error {
 	// Expand home directory in path
 	repoPath := expandHome(repoInfo.Path)
 
+	// Check if token is configured but env var is empty
+	if cfg.GitHub.Token != "" && cfg.ResolvedGitHubToken() == "" {
+		log.Println("warning: github.token configured but env var is empty, using default gh auth")
+	}
+
 	// Initialize components
-	ghClient := github.NewGHClient()
+	ghClient := github.NewGHClient(cfg.ResolvedGitHubToken())
 	worktreeManager := git.NewWorktreeManager()
 	reviewer := review.NewClaudeReviewer()
 

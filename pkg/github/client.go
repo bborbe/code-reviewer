@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -22,11 +23,14 @@ type Client interface {
 }
 
 // NewGHClient creates a Client that uses the gh CLI.
-func NewGHClient() Client {
-	return &ghClient{}
+// If token is non-empty, it will be passed to gh CLI via GH_TOKEN env var.
+func NewGHClient(token string) Client {
+	return &ghClient{token: token}
 }
 
-type ghClient struct{}
+type ghClient struct {
+	token string
+}
 
 // GetPRBranch fetches the source branch name (headRefName) for a pull request.
 func (c *ghClient) GetPRBranch(
@@ -44,6 +48,11 @@ func (c *ghClient) GetPRBranch(
 		"--json", "headRefName",
 		"--jq", ".headRefName",
 	)
+
+	// Set GH_TOKEN if configured
+	if c.token != "" {
+		cmd.Env = append(os.Environ(), "GH_TOKEN="+c.token)
+	}
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -77,6 +86,11 @@ func (c *ghClient) PostComment(
 		"--repo", repoArg,
 		"--body", body,
 	)
+
+	// Set GH_TOKEN if configured
+	if c.token != "" {
+		cmd.Env = append(os.Environ(), "GH_TOKEN="+c.token)
+	}
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
