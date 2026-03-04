@@ -479,4 +479,59 @@ repos:
 			})
 		})
 	})
+
+	Describe("ResolvedModel", func() {
+		Context("when model field is not set", func() {
+			BeforeEach(func() {
+				cfg = &config.Config{
+					Repos: []config.RepoConfig{
+						{
+							URL:  "https://github.com/bborbe/teamvault-docker",
+							Path: "/home/user/teamvault-docker",
+						},
+					},
+				}
+			})
+
+			It("returns default model (sonnet)", func() {
+				Expect(cfg.ResolvedModel()).To(Equal("sonnet"))
+			})
+		})
+
+		Context("when model field is set to custom value", func() {
+			BeforeEach(func() {
+				cfg = &config.Config{
+					Model: "opus",
+					Repos: []config.RepoConfig{
+						{
+							URL:  "https://github.com/bborbe/teamvault-docker",
+							Path: "/home/user/teamvault-docker",
+						},
+					},
+				}
+			})
+
+			It("returns configured model", func() {
+				Expect(cfg.ResolvedModel()).To(Equal("opus"))
+			})
+		})
+
+		Context("when model field is empty string", func() {
+			BeforeEach(func() {
+				cfg = &config.Config{
+					Model: "",
+					Repos: []config.RepoConfig{
+						{
+							URL:  "https://github.com/bborbe/teamvault-docker",
+							Path: "/home/user/teamvault-docker",
+						},
+					},
+				}
+			})
+
+			It("returns default model (sonnet)", func() {
+				Expect(cfg.ResolvedModel()).To(Equal("sonnet"))
+			})
+		})
+	})
 })

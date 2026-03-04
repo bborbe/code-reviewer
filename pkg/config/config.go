@@ -22,9 +22,13 @@ type GitHubConfig struct {
 	Token string `yaml:"token"`
 }
 
+// DefaultModel is the default Claude model to use when not specified in config.
+const DefaultModel = "sonnet"
+
 // Config holds the pr-reviewer configuration.
 type Config struct {
 	GitHub GitHubConfig `yaml:"github"`
+	Model  string       `yaml:"model"`
 	Repos  []RepoConfig `yaml:"repos"`
 }
 
@@ -57,6 +61,14 @@ func resolveEnvVar(value string) string {
 // ResolvedGitHubToken returns the GitHub token with environment variable resolution.
 func (c *Config) ResolvedGitHubToken() string {
 	return resolveEnvVar(c.GitHub.Token)
+}
+
+// ResolvedModel returns the configured model if non-empty, otherwise returns DefaultModel.
+func (c *Config) ResolvedModel() string {
+	if c.Model != "" {
+		return c.Model
+	}
+	return DefaultModel
 }
 
 // Loader loads configuration from a source.

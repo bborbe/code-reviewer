@@ -130,6 +130,7 @@ func run(ctx context.Context, verbose bool) error {
 		ghClient,
 		worktreePath,
 		repoInfo.ReviewCommand,
+		cfg.ResolvedModel(),
 		prInfo,
 	)
 }
@@ -142,12 +143,13 @@ func runReviewAndPost(
 	ghClient github.Client,
 	worktreePath string,
 	reviewCommand string,
+	model string,
 	prInfo *github.PRInfo,
 ) error {
 	// Run review
 	logAlways("reviewing PR #%d (%s/%s)...", prInfo.Number, prInfo.Owner, prInfo.Repo)
 	logVerbose(verbose, "running review... (this may take a few minutes)")
-	reviewText, err := reviewer.Review(ctx, worktreePath, reviewCommand)
+	reviewText, err := reviewer.Review(ctx, worktreePath, reviewCommand, model)
 	if err != nil {
 		return errors.Wrap(ctx, err, "review failed")
 	}

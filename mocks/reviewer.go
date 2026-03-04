@@ -9,12 +9,13 @@ import (
 )
 
 type Reviewer struct {
-	ReviewStub        func(context.Context, string, string) (string, error)
+	ReviewStub        func(context.Context, string, string, string) (string, error)
 	reviewMutex       sync.RWMutex
 	reviewArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
+		arg4 string
 	}
 	reviewReturns struct {
 		result1 string
@@ -28,20 +29,21 @@ type Reviewer struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *Reviewer) Review(arg1 context.Context, arg2 string, arg3 string) (string, error) {
+func (fake *Reviewer) Review(arg1 context.Context, arg2 string, arg3 string, arg4 string) (string, error) {
 	fake.reviewMutex.Lock()
 	ret, specificReturn := fake.reviewReturnsOnCall[len(fake.reviewArgsForCall)]
 	fake.reviewArgsForCall = append(fake.reviewArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
-	}{arg1, arg2, arg3})
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
 	stub := fake.ReviewStub
 	fakeReturns := fake.reviewReturns
-	fake.recordInvocation("Review", []interface{}{arg1, arg2, arg3})
+	fake.recordInvocation("Review", []interface{}{arg1, arg2, arg3, arg4})
 	fake.reviewMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3)
+		return stub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -55,17 +57,17 @@ func (fake *Reviewer) ReviewCallCount() int {
 	return len(fake.reviewArgsForCall)
 }
 
-func (fake *Reviewer) ReviewCalls(stub func(context.Context, string, string) (string, error)) {
+func (fake *Reviewer) ReviewCalls(stub func(context.Context, string, string, string) (string, error)) {
 	fake.reviewMutex.Lock()
 	defer fake.reviewMutex.Unlock()
 	fake.ReviewStub = stub
 }
 
-func (fake *Reviewer) ReviewArgsForCall(i int) (context.Context, string, string) {
+func (fake *Reviewer) ReviewArgsForCall(i int) (context.Context, string, string, string) {
 	fake.reviewMutex.RLock()
 	defer fake.reviewMutex.RUnlock()
 	argsForCall := fake.reviewArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *Reviewer) ReviewReturns(result1 string, result2 error) {
