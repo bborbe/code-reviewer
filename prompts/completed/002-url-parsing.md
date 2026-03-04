@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Implemented GitHub PR URL parsing with PRInfo struct and ParsePRURL function
+container: pr-reviewer-002-url-parsing
+dark-factory-version: v0.14.5
+created: "2026-03-04T14:03:58Z"
+queued: "2026-03-04T14:03:58Z"
+started: "2026-03-04T14:03:58Z"
+completed: "2026-03-04T14:08:19Z"
+---
 <objective>
 Implement GitHub PR URL parsing. The tool needs to extract owner, repo, and PR number from a GitHub PR URL, and construct the repo URL for config lookup.
 </objective>
