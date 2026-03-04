@@ -1,0 +1,52 @@
+<objective>
+Add configurable Claude model with default claude-sonnet-4-6. Always pass --model flag to claude CLI.
+</objective>
+
+<context>
+Read CLAUDE.md for project conventions.
+Read ALL markdown files in ~/Documents/workspaces/coding-guidelines/ for Go patterns.
+Precondition: pkg/config, pkg/review, main.go exist and are tested.
+</context>
+
+<requirements>
+1. Update `Config` in `pkg/config/config.go`:
+   - Add `Model string \`yaml:"model"\`` field to `Config`
+   - Add constant `DefaultModel = "claude-sonnet-4-6"`
+   - Add method `ResolvedModel() string` — returns Model if non-empty, else DefaultModel
+
+2. Update `Reviewer.Review` in `pkg/review/review.go`:
+   - Add `model` parameter: `Review(ctx context.Context, worktreePath string, command string, model string) (string, error)`
+   - Build claude args: `claude --print --model <model> <command>`
+
+3. Update `main.go`:
+   - Pass `cfg.ResolvedModel()` to reviewer.Review
+
+4. Update tests:
+   - Config test: no model field → ResolvedModel() returns "claude-sonnet-4-6"
+   - Config test: model field set → ResolvedModel() returns configured value
+   - Review mock: update to match new interface signature
+
+5. Regenerate counterfeiter mocks: `go generate ./...`
+</requirements>
+
+<constraints>
+- Default model is always claude-sonnet-4-6
+- --model flag always passed to claude CLI (never omitted)
+- Backward compatible — existing configs without model field use default
+- Use Ginkgo v2 + Gomega for tests
+- Use counterfeiter for mocks
+</constraints>
+
+<verification>
+Run `go generate ./...` -- must succeed.
+Run `make test` -- must pass.
+Run `make precommit` -- must pass.
+</verification>
+
+<success_criteria>
+- model field parsed from config YAML
+- Default claude-sonnet-4-6 when not specified
+- --model always passed to claude CLI
+- Existing configs without model field still work
+- make precommit passes
+</success_criteria>
