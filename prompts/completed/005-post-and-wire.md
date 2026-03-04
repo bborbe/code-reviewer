@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Implemented GitHub client and wired everything together in main.go for end-to-end PR review workflow
+container: pr-reviewer-005-post-and-wire
+dark-factory-version: v0.14.5
+created: "2026-03-04T14:24:53Z"
+queued: "2026-03-04T14:24:53Z"
+started: "2026-03-04T14:24:53Z"
+completed: "2026-03-04T14:31:36Z"
+---
 <objective>
 Wire everything together in main.go: parse URL, load config, fetch PR metadata, create worktree, run review, post comment, clean up. Also implement the GitHub comment posting and PR metadata fetching via `gh` CLI. This is the final prompt — after this, the tool works end-to-end.
 </objective>
