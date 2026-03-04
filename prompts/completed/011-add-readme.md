@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Created comprehensive README.md with installation, usage, configuration, and workflow documentation
+container: pr-reviewer-011-add-readme
+dark-factory-version: v0.14.5
+created: "2026-03-04T21:18:46Z"
+queued: "2026-03-04T21:18:46Z"
+started: "2026-03-04T21:18:46Z"
+completed: "2026-03-04T21:21:53Z"
+---
 <objective>
 Add a comprehensive README.md for the pr-reviewer project.
 </objective>

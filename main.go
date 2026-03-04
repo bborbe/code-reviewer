@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/bborbe/errors"
@@ -74,7 +73,7 @@ func run(ctx context.Context, verbose bool) error {
 	}
 
 	// Expand home directory in path
-	repoPath := expandHome(repoInfo.Path)
+	repoPath := config.ExpandHome(repoInfo.Path)
 	logVerbose(verbose, "repo: %s", repoPath)
 
 	// Check if token is configured but env var is empty
@@ -183,22 +182,4 @@ func logVerbose(verbose bool, format string, args ...interface{}) {
 	if verbose {
 		fmt.Fprintf(os.Stderr, format+"\n", args...)
 	}
-}
-
-// expandHome expands ~ to the user's home directory.
-func expandHome(path string) string {
-	if len(path) == 0 || path[0] != '~' {
-		return path
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return path
-	}
-
-	if len(path) == 1 {
-		return home
-	}
-
-	return filepath.Join(home, path[1:])
 }

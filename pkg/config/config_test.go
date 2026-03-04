@@ -99,14 +99,44 @@ var _ = Describe("Config", func() {
 `
 				err := os.WriteFile(configPath, []byte(yamlWithoutGithub), 0600)
 				Expect(err).To(BeNil())
+				// Ensure default env var is unset so token resolves to empty
+				err = os.Unsetenv("PR_REVIEWER_GITHUB_TOKEN")
+				Expect(err).To(BeNil())
 			})
 
 			It("returns no error", func() {
 				Expect(err).To(BeNil())
 			})
 
-			It("ResolvedGitHubToken returns empty string", func() {
+			It("ResolvedGitHubToken falls back to default env var and returns empty when unset", func() {
 				Expect(cfg.ResolvedGitHubToken()).To(Equal(""))
+			})
+		})
+
+		Context("without github section but default env var set", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithoutGithub := `repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithoutGithub), 0600)
+				Expect(err).To(BeNil())
+				err = os.Setenv("PR_REVIEWER_GITHUB_TOKEN", "default-token-value")
+				Expect(err).To(BeNil())
+			})
+
+			AfterEach(func() {
+				err := os.Unsetenv("PR_REVIEWER_GITHUB_TOKEN")
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It("ResolvedGitHubToken returns the default env var value", func() {
+				Expect(cfg.ResolvedGitHubToken()).To(Equal("default-token-value"))
 			})
 		})
 

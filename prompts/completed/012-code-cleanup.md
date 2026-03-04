@@ -1,3 +1,13 @@
+---
+status: completed
+summary: Deduplicated expandHome() function and added missing go:generate directive
+container: pr-reviewer-012-code-cleanup
+dark-factory-version: v0.14.5
+created: "2026-03-04T21:21:55Z"
+queued: "2026-03-04T21:21:55Z"
+started: "2026-03-04T21:21:55Z"
+completed: "2026-03-04T21:25:22Z"
+---
 <objective>
 Fix code duplication and minor housekeeping issues found in code review.
 </objective>

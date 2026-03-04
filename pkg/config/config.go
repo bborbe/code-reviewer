@@ -25,6 +25,9 @@ type GitHubConfig struct {
 // DefaultModel is the default Claude model to use when not specified in config.
 const DefaultModel = "sonnet"
 
+// DefaultGitHubToken is the default env var reference for the GitHub token.
+const DefaultGitHubToken = "${PR_REVIEWER_GITHUB_TOKEN}"
+
 // Config holds the pr-reviewer configuration.
 type Config struct {
 	GitHub GitHubConfig `yaml:"github"`
@@ -59,8 +62,13 @@ func resolveEnvVar(value string) string {
 }
 
 // ResolvedGitHubToken returns the GitHub token with environment variable resolution.
+// If no token is configured, falls back to DefaultGitHubToken.
 func (c *Config) ResolvedGitHubToken() string {
-	return resolveEnvVar(c.GitHub.Token)
+	token := c.GitHub.Token
+	if token == "" {
+		token = DefaultGitHubToken
+	}
+	return resolveEnvVar(token)
 }
 
 // ResolvedModel returns the configured model if non-empty, otherwise returns DefaultModel.
@@ -88,7 +96,7 @@ type fileLoader struct {
 }
 
 func (l *fileLoader) Load(ctx context.Context) (*Config, error) {
-	expandedPath := expandHome(l.configPath)
+	expandedPath := ExpandHome(l.configPath)
 
 	// #nosec G304 -- path from constructor, typically ~/.pr-reviewer.yaml
 	data, err := os.ReadFile(expandedPath)
@@ -123,7 +131,8 @@ func (l *fileLoader) Load(ctx context.Context) (*Config, error) {
 	return &cfg, nil
 }
 
-func expandHome(path string) string {
+// ExpandHome expands ~ to the user's home directory.
+func ExpandHome(path string) string {
 	if !strings.HasPrefix(path, "~") {
 		return path
 	}
