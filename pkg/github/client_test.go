@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/bborbe/pr-reviewer/pkg/github"
+	"github.com/bborbe/pr-reviewer/pkg/verdict"
 )
 
 var _ = Describe("Client", func() {
@@ -70,6 +71,60 @@ var _ = Describe("Client", func() {
 			err := client.PostComment(cancelCtx, "owner", "repo", 123, "test comment")
 			Expect(err).To(HaveOccurred())
 		})
+	})
+
+	Context("SubmitReview", func() {
+		It("returns error for VerdictComment", func() {
+			client := github.NewGHClient("")
+			err := client.SubmitReview(
+				ctx,
+				"owner",
+				"repo",
+				123,
+				"test review",
+				verdict.VerdictComment,
+			)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("unsupported verdict"))
+			Expect(err.Error()).To(ContainSubstring("use PostComment instead"))
+		})
+
+		It("returns error for unknown verdict", func() {
+			client := github.NewGHClient("")
+			err := client.SubmitReview(
+				ctx,
+				"owner",
+				"repo",
+				123,
+				"test review",
+				verdict.Verdict("unknown"),
+			)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("unsupported verdict"))
+		})
+
+		It("respects context cancellation", func() {
+			client := github.NewGHClient("")
+			cancelCtx, cancel := context.WithCancel(ctx)
+			cancel() // Cancel immediately
+			err := client.SubmitReview(
+				cancelCtx,
+				"owner",
+				"repo",
+				123,
+				"test review",
+				verdict.VerdictApprove,
+			)
+			Expect(err).To(HaveOccurred())
+		})
+
+		// NOTE: Success path tests for approve and request-changes are not practical
+		// without refactoring. The ghClient uses exec.CommandContext internally, which
+		// cannot be mocked without injecting a command executor interface. To test:
+		// - Correct gh pr review command construction with --approve or --request-changes
+		// - GH_TOKEN environment variable handling
+		// - Body text passing
+		// We would need to refactor ghClient to accept an injectable command executor.
 	})
 
 	// NOTE: Success path tests for GetPRBranch and PostComment are not practical
