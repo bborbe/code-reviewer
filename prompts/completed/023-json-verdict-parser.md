@@ -1,5 +1,12 @@
 ---
-status: approved
+status: completed
+summary: Added JSON verdict parser with heuristic fallback and strip functionality
+container: pr-reviewer-023-json-verdict-parser
+dark-factory-version: v0.17.2
+created: "2026-03-05T18:37:07Z"
+queued: "2026-03-05T18:37:07Z"
+started: "2026-03-05T18:37:07Z"
+completed: "2026-03-05T18:44:39Z"
 ---
 <objective>
 Update the verdict parser to extract a structured JSON verdict block from review output, with fallback to the existing heuristic section scanning.
