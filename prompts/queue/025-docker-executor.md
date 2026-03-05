@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 <objective>
 Add a Docker-based review executor that runs Claude inside the claude-yolo container, matching dark-factory's execution pattern.
@@ -23,11 +23,13 @@ Reference (do not import): ~/Documents/workspaces/dark-factory/pkg/executor/exec
 
 3. The `Review(ctx, worktreePath, command, model string) (string, error)` method:
    - Gets user home directory
-   - Runs: `docker run --rm --cap-add=NET_ADMIN --cap-add=NET_RAW -v <worktreePath>:/workspace -v <home>/.claude-yolo:/home/node/.claude -v <home>/go/pkg:/home/node/go/pkg <containerImage> claude --print --model <model> <command>`
-   - Working directory inside container is `/workspace`
-   - Filter CLAUDECODE env vars (same as claudeReviewer)
+   - Runs: `docker run --rm --cap-add=NET_ADMIN --cap-add=NET_RAW -w /workspace -v <worktreePath>:/workspace -v <home>/.claude-yolo:/home/node/.claude -v <home>/go/pkg:/home/node/go/pkg <containerImage> claude --print --model <model> <command>`
+   - `-w /workspace` sets the working directory inside container
+   - No env var forwarding — Claude auth comes from the mounted `~/.claude-yolo` config dir (same as dark-factory)
+   - Do NOT pass host env vars into container (no `-e` flags for API keys)
    - Captures stdout as review text, stderr for errors
    - Returns review text on success
+   - Export the existing `filterEnv` function as `FilterEnv` so dockerReviewer can reuse it (or duplicate the logic in the same package)
 
 4. The container image should be configurable. Add `containerImage` field to the top-level Config struct (yaml: `containerImage`), defaulting to `docker.io/bborbe/claude-yolo:v0.0.9`.
 

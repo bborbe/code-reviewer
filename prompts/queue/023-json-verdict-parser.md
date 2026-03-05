@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 <objective>
 Update the verdict parser to extract a structured JSON verdict block from review output, with fallback to the existing heuristic section scanning.
@@ -28,6 +28,7 @@ Read specs/007-sandboxed-review-execution.md for the full spec.
 3. Add a new function `StripJSONVerdict(reviewText string) string` that:
    - Removes the JSON verdict line (and surrounding code fence if present) from the review text
    - Returns the cleaned review text for posting as a PR comment
+   - Collapses extra trailing blank lines left after removal
    - If no JSON verdict found, returns the text unchanged
 
 4. Add comprehensive tests:
@@ -47,7 +48,7 @@ Read specs/007-sandboxed-review-execution.md for the full spec.
 - All existing tests must continue to pass (backward compatibility)
 - The heuristic parser must remain unchanged — JSON is tried first, heuristic is fallback
 - JSON verdict regex must not match arbitrary JSON in code examples within the review
-- The JSON line should be near the end of the review text (last 20 lines) to avoid false matches
+- The JSON line should be near the end of the review text (last 50 lines) to avoid false matches
 </constraints>
 
 <verification>
