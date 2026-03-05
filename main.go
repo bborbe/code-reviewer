@@ -116,6 +116,7 @@ func runGitHub(
 	ghClient := github.NewGHClient(resolvedToken)
 
 	// Get PR branch name
+	logAlways("fetching PR #%d metadata...", prInfo.Number)
 	branch, err := ghClient.GetPRBranch(ctx, prInfo.Owner, prInfo.Repo, prInfo.Number)
 	if err != nil {
 		return errors.Wrap(ctx, err, "get PR branch failed")
@@ -139,7 +140,6 @@ func runGitHub(
 	reviewer := review.NewClaudeReviewer()
 	reviewText, result, err := runReview(
 		ctx,
-		verbose,
 		reviewer,
 		worktreePath,
 		repoInfo.ReviewCommand,
@@ -179,6 +179,7 @@ func runBitbucket(
 	bbClient := bitbucket.NewClient(resolvedToken)
 
 	// Get PR branch name
+	logAlways("fetching PR #%d metadata...", prInfo.Number)
 	branch, err := bbClient.GetPRBranch(
 		ctx,
 		prInfo.Host,
@@ -208,7 +209,6 @@ func runBitbucket(
 	reviewer := review.NewClaudeReviewer()
 	reviewText, result, err := runReview(
 		ctx,
-		verbose,
 		reviewer,
 		worktreePath,
 		repoInfo.ReviewCommand,
@@ -234,11 +234,13 @@ func createWorktreeAndFetch(
 	worktreeManager := git.NewWorktreeManager()
 
 	// Fetch latest changes
+	logAlways("fetching latest changes...")
 	if err := worktreeManager.Fetch(ctx, repoPath); err != nil {
 		return "", nil, errors.Wrap(ctx, err, "fetch failed")
 	}
 
 	// Create worktree
+	logAlways("creating worktree for branch %s...", branch)
 	worktreePath, err := worktreeManager.CreateWorktree(ctx, repoPath, branch, prNumber)
 	if err != nil {
 		return "", nil, errors.Wrap(ctx, err, "create worktree failed")
@@ -266,14 +268,17 @@ func createWorktreeAndFetch(
 // runReview executes the Claude review and returns the review text and verdict.
 func runReview(
 	ctx context.Context,
-	verbose bool,
 	reviewer review.Reviewer,
 	worktreePath, reviewCommand, model string,
 	prInfo *prurl.PRInfo,
 ) (string, verdict.Result, error) {
 	// Run review
-	logAlways("reviewing PR #%d (%s/%s)...", prInfo.Number, prInfo.Owner, prInfo.Repo)
-	logVerbose(verbose, "running review... (this may take a few minutes)")
+	logAlways(
+		"reviewing PR #%d (%s/%s) (this may take a few minutes)...",
+		prInfo.Number,
+		prInfo.Owner,
+		prInfo.Repo,
+	)
 	reviewText, err := reviewer.Review(ctx, worktreePath, reviewCommand, model)
 	if err != nil {
 		return "", verdict.Result{}, errors.Wrap(ctx, err, "review failed")

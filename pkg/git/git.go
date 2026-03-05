@@ -68,7 +68,11 @@ func (m *worktreeManager) CreateWorktree(
 	// Remove stale worktree if it exists
 	if _, err := os.Stat(worktreePath); err == nil {
 		if err := m.RemoveWorktree(ctx, repoPath, worktreePath); err != nil {
-			return "", errors.Wrap(ctx, err, "remove stale worktree failed")
+			// Fallback: force-remove directory and prune git worktree list
+			if removeErr := os.RemoveAll(worktreePath); removeErr != nil {
+				return "", errors.Wrap(ctx, removeErr, "remove stale worktree directory failed")
+			}
+			_ = m.runGit(ctx, repoPath, "worktree", "prune")
 		}
 	}
 
@@ -134,9 +138,11 @@ func (m *worktreeManager) validateRepoPath(ctx context.Context, repoPath string)
 	return nil
 }
 
-// worktreePath generates the deterministic worktree path.
+// worktreePath generates the deterministic worktree path under os.TempDir().
+// Uses repo basename to avoid collisions between different repos.
 func (m *worktreeManager) worktreePath(repoPath string, prNumber int) string {
-	return filepath.Join(repoPath, ".worktrees", fmt.Sprintf("pr-%d", prNumber))
+	repoName := filepath.Base(repoPath)
+	return filepath.Join(os.TempDir(), fmt.Sprintf("pr-reviewer-%s-pr-%d", repoName, prNumber))
 }
 
 // runGit executes a git command and returns an error with stderr.

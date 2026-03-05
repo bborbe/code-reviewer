@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.4.1
+
+- Add progress logging for long-running operations (fetch, worktree, review, post)
+- Move worktrees to /tmp to avoid polluting repo directory
+- Add robust stale worktree cleanup with fallback to force-remove
+
 ## v0.4.0
 
 - Add Bitbucket Server support: parse PR URLs, fetch branch, post comments via REST API

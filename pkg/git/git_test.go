@@ -73,10 +73,13 @@ var _ = Describe("WorktreeManager", func() {
 		})
 
 		Context("with valid branch", func() {
-			It("returns deterministic worktree path", func() {
+			It("returns deterministic worktree path under temp dir", func() {
 				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 123)
 				Expect(err).To(BeNil())
-				Expect(worktreePath).To(Equal(filepath.Join(repoPath, ".worktrees", "pr-123")))
+				repoName := filepath.Base(repoPath)
+				Expect(
+					worktreePath,
+				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-123")))
 
 				// Verify worktree directory exists
 				info, err := os.Stat(worktreePath)
@@ -94,7 +97,10 @@ var _ = Describe("WorktreeManager", func() {
 			It("creates worktree successfully using detached HEAD", func() {
 				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 999)
 				Expect(err).To(BeNil())
-				Expect(worktreePath).To(Equal(filepath.Join(repoPath, ".worktrees", "pr-999")))
+				repoName := filepath.Base(repoPath)
+				Expect(
+					worktreePath,
+				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-999")))
 
 				// Verify worktree directory exists
 				info, err := os.Stat(worktreePath)
@@ -118,7 +124,10 @@ var _ = Describe("WorktreeManager", func() {
 			It("removes stale worktree and creates fresh one", func() {
 				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 456)
 				Expect(err).To(BeNil())
-				Expect(worktreePath).To(Equal(filepath.Join(repoPath, ".worktrees", "pr-456")))
+				repoName := filepath.Base(repoPath)
+				Expect(
+					worktreePath,
+				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-456")))
 
 				// Verify worktree exists
 				_, err = os.Stat(worktreePath)
@@ -200,7 +209,10 @@ var _ = Describe("WorktreeManager", func() {
 			// Create worktree
 			worktreePath, err := manager.CreateWorktree(ctx, repoPath, "pr-branch", 42)
 			Expect(err).To(BeNil())
-			Expect(worktreePath).To(Equal(filepath.Join(repoPath, ".worktrees", "pr-42")))
+			repoName := filepath.Base(repoPath)
+			Expect(
+				worktreePath,
+			).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-42")))
 
 			// Verify worktree exists and has git repo
 			gitFile := filepath.Join(worktreePath, ".git")
