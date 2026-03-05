@@ -9,19 +9,19 @@ import (
 )
 
 type WorktreeManager struct {
-	CreateWorktreeStub        func(context.Context, string, string, int) (string, error)
-	createWorktreeMutex       sync.RWMutex
-	createWorktreeArgsForCall []struct {
+	CreateCloneStub        func(context.Context, string, string, int) (string, error)
+	createCloneMutex       sync.RWMutex
+	createCloneArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
 		arg4 int
 	}
-	createWorktreeReturns struct {
+	createCloneReturns struct {
 		result1 string
 		result2 error
 	}
-	createWorktreeReturnsOnCall map[int]struct {
+	createCloneReturnsOnCall map[int]struct {
 		result1 string
 		result2 error
 	}
@@ -37,36 +37,35 @@ type WorktreeManager struct {
 	fetchReturnsOnCall map[int]struct {
 		result1 error
 	}
-	RemoveWorktreeStub        func(context.Context, string, string) error
-	removeWorktreeMutex       sync.RWMutex
-	removeWorktreeArgsForCall []struct {
+	RemoveCloneStub        func(context.Context, string) error
+	removeCloneMutex       sync.RWMutex
+	removeCloneArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
-		arg3 string
 	}
-	removeWorktreeReturns struct {
+	removeCloneReturns struct {
 		result1 error
 	}
-	removeWorktreeReturnsOnCall map[int]struct {
+	removeCloneReturnsOnCall map[int]struct {
 		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *WorktreeManager) CreateWorktree(arg1 context.Context, arg2 string, arg3 string, arg4 int) (string, error) {
-	fake.createWorktreeMutex.Lock()
-	ret, specificReturn := fake.createWorktreeReturnsOnCall[len(fake.createWorktreeArgsForCall)]
-	fake.createWorktreeArgsForCall = append(fake.createWorktreeArgsForCall, struct {
+func (fake *WorktreeManager) CreateClone(arg1 context.Context, arg2 string, arg3 string, arg4 int) (string, error) {
+	fake.createCloneMutex.Lock()
+	ret, specificReturn := fake.createCloneReturnsOnCall[len(fake.createCloneArgsForCall)]
+	fake.createCloneArgsForCall = append(fake.createCloneArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
 		arg3 string
 		arg4 int
 	}{arg1, arg2, arg3, arg4})
-	stub := fake.CreateWorktreeStub
-	fakeReturns := fake.createWorktreeReturns
-	fake.recordInvocation("CreateWorktree", []interface{}{arg1, arg2, arg3, arg4})
-	fake.createWorktreeMutex.Unlock()
+	stub := fake.CreateCloneStub
+	fakeReturns := fake.createCloneReturns
+	fake.recordInvocation("CreateClone", []interface{}{arg1, arg2, arg3, arg4})
+	fake.createCloneMutex.Unlock()
 	if stub != nil {
 		return stub(arg1, arg2, arg3, arg4)
 	}
@@ -76,46 +75,46 @@ func (fake *WorktreeManager) CreateWorktree(arg1 context.Context, arg2 string, a
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *WorktreeManager) CreateWorktreeCallCount() int {
-	fake.createWorktreeMutex.RLock()
-	defer fake.createWorktreeMutex.RUnlock()
-	return len(fake.createWorktreeArgsForCall)
+func (fake *WorktreeManager) CreateCloneCallCount() int {
+	fake.createCloneMutex.RLock()
+	defer fake.createCloneMutex.RUnlock()
+	return len(fake.createCloneArgsForCall)
 }
 
-func (fake *WorktreeManager) CreateWorktreeCalls(stub func(context.Context, string, string, int) (string, error)) {
-	fake.createWorktreeMutex.Lock()
-	defer fake.createWorktreeMutex.Unlock()
-	fake.CreateWorktreeStub = stub
+func (fake *WorktreeManager) CreateCloneCalls(stub func(context.Context, string, string, int) (string, error)) {
+	fake.createCloneMutex.Lock()
+	defer fake.createCloneMutex.Unlock()
+	fake.CreateCloneStub = stub
 }
 
-func (fake *WorktreeManager) CreateWorktreeArgsForCall(i int) (context.Context, string, string, int) {
-	fake.createWorktreeMutex.RLock()
-	defer fake.createWorktreeMutex.RUnlock()
-	argsForCall := fake.createWorktreeArgsForCall[i]
+func (fake *WorktreeManager) CreateCloneArgsForCall(i int) (context.Context, string, string, int) {
+	fake.createCloneMutex.RLock()
+	defer fake.createCloneMutex.RUnlock()
+	argsForCall := fake.createCloneArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *WorktreeManager) CreateWorktreeReturns(result1 string, result2 error) {
-	fake.createWorktreeMutex.Lock()
-	defer fake.createWorktreeMutex.Unlock()
-	fake.CreateWorktreeStub = nil
-	fake.createWorktreeReturns = struct {
+func (fake *WorktreeManager) CreateCloneReturns(result1 string, result2 error) {
+	fake.createCloneMutex.Lock()
+	defer fake.createCloneMutex.Unlock()
+	fake.CreateCloneStub = nil
+	fake.createCloneReturns = struct {
 		result1 string
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *WorktreeManager) CreateWorktreeReturnsOnCall(i int, result1 string, result2 error) {
-	fake.createWorktreeMutex.Lock()
-	defer fake.createWorktreeMutex.Unlock()
-	fake.CreateWorktreeStub = nil
-	if fake.createWorktreeReturnsOnCall == nil {
-		fake.createWorktreeReturnsOnCall = make(map[int]struct {
+func (fake *WorktreeManager) CreateCloneReturnsOnCall(i int, result1 string, result2 error) {
+	fake.createCloneMutex.Lock()
+	defer fake.createCloneMutex.Unlock()
+	fake.CreateCloneStub = nil
+	if fake.createCloneReturnsOnCall == nil {
+		fake.createCloneReturnsOnCall = make(map[int]struct {
 			result1 string
 			result2 error
 		})
 	}
-	fake.createWorktreeReturnsOnCall[i] = struct {
+	fake.createCloneReturnsOnCall[i] = struct {
 		result1 string
 		result2 error
 	}{result1, result2}
@@ -183,20 +182,19 @@ func (fake *WorktreeManager) FetchReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *WorktreeManager) RemoveWorktree(arg1 context.Context, arg2 string, arg3 string) error {
-	fake.removeWorktreeMutex.Lock()
-	ret, specificReturn := fake.removeWorktreeReturnsOnCall[len(fake.removeWorktreeArgsForCall)]
-	fake.removeWorktreeArgsForCall = append(fake.removeWorktreeArgsForCall, struct {
+func (fake *WorktreeManager) RemoveClone(arg1 context.Context, arg2 string) error {
+	fake.removeCloneMutex.Lock()
+	ret, specificReturn := fake.removeCloneReturnsOnCall[len(fake.removeCloneArgsForCall)]
+	fake.removeCloneArgsForCall = append(fake.removeCloneArgsForCall, struct {
 		arg1 context.Context
 		arg2 string
-		arg3 string
-	}{arg1, arg2, arg3})
-	stub := fake.RemoveWorktreeStub
-	fakeReturns := fake.removeWorktreeReturns
-	fake.recordInvocation("RemoveWorktree", []interface{}{arg1, arg2, arg3})
-	fake.removeWorktreeMutex.Unlock()
+	}{arg1, arg2})
+	stub := fake.RemoveCloneStub
+	fakeReturns := fake.removeCloneReturns
+	fake.recordInvocation("RemoveClone", []interface{}{arg1, arg2})
+	fake.removeCloneMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -204,44 +202,44 @@ func (fake *WorktreeManager) RemoveWorktree(arg1 context.Context, arg2 string, a
 	return fakeReturns.result1
 }
 
-func (fake *WorktreeManager) RemoveWorktreeCallCount() int {
-	fake.removeWorktreeMutex.RLock()
-	defer fake.removeWorktreeMutex.RUnlock()
-	return len(fake.removeWorktreeArgsForCall)
+func (fake *WorktreeManager) RemoveCloneCallCount() int {
+	fake.removeCloneMutex.RLock()
+	defer fake.removeCloneMutex.RUnlock()
+	return len(fake.removeCloneArgsForCall)
 }
 
-func (fake *WorktreeManager) RemoveWorktreeCalls(stub func(context.Context, string, string) error) {
-	fake.removeWorktreeMutex.Lock()
-	defer fake.removeWorktreeMutex.Unlock()
-	fake.RemoveWorktreeStub = stub
+func (fake *WorktreeManager) RemoveCloneCalls(stub func(context.Context, string) error) {
+	fake.removeCloneMutex.Lock()
+	defer fake.removeCloneMutex.Unlock()
+	fake.RemoveCloneStub = stub
 }
 
-func (fake *WorktreeManager) RemoveWorktreeArgsForCall(i int) (context.Context, string, string) {
-	fake.removeWorktreeMutex.RLock()
-	defer fake.removeWorktreeMutex.RUnlock()
-	argsForCall := fake.removeWorktreeArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+func (fake *WorktreeManager) RemoveCloneArgsForCall(i int) (context.Context, string) {
+	fake.removeCloneMutex.RLock()
+	defer fake.removeCloneMutex.RUnlock()
+	argsForCall := fake.removeCloneArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *WorktreeManager) RemoveWorktreeReturns(result1 error) {
-	fake.removeWorktreeMutex.Lock()
-	defer fake.removeWorktreeMutex.Unlock()
-	fake.RemoveWorktreeStub = nil
-	fake.removeWorktreeReturns = struct {
+func (fake *WorktreeManager) RemoveCloneReturns(result1 error) {
+	fake.removeCloneMutex.Lock()
+	defer fake.removeCloneMutex.Unlock()
+	fake.RemoveCloneStub = nil
+	fake.removeCloneReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *WorktreeManager) RemoveWorktreeReturnsOnCall(i int, result1 error) {
-	fake.removeWorktreeMutex.Lock()
-	defer fake.removeWorktreeMutex.Unlock()
-	fake.RemoveWorktreeStub = nil
-	if fake.removeWorktreeReturnsOnCall == nil {
-		fake.removeWorktreeReturnsOnCall = make(map[int]struct {
+func (fake *WorktreeManager) RemoveCloneReturnsOnCall(i int, result1 error) {
+	fake.removeCloneMutex.Lock()
+	defer fake.removeCloneMutex.Unlock()
+	fake.RemoveCloneStub = nil
+	if fake.removeCloneReturnsOnCall == nil {
+		fake.removeCloneReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.removeWorktreeReturnsOnCall[i] = struct {
+	fake.removeCloneReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }

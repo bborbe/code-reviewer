@@ -64,7 +64,7 @@ var _ = Describe("WorktreeManager", func() {
 		})
 	})
 
-	Describe("CreateWorktree", func() {
+	Describe("CreateClone", func() {
 		var repoPath string
 
 		BeforeEach(func() {
@@ -73,16 +73,16 @@ var _ = Describe("WorktreeManager", func() {
 		})
 
 		Context("with valid branch", func() {
-			It("returns deterministic worktree path under temp dir", func() {
-				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 123)
+			It("returns deterministic clone path under temp dir", func() {
+				clonePath, err := manager.CreateClone(ctx, repoPath, "feature-branch", 123)
 				Expect(err).To(BeNil())
 				repoName := filepath.Base(repoPath)
 				Expect(
-					worktreePath,
+					clonePath,
 				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-123")))
 
-				// Verify worktree directory exists
-				info, err := os.Stat(worktreePath)
+				// Verify clone directory exists
+				info, err := os.Stat(clonePath)
 				Expect(err).To(BeNil())
 				Expect(info.IsDir()).To(BeTrue())
 			})
@@ -94,50 +94,50 @@ var _ = Describe("WorktreeManager", func() {
 				runCmd(repoPath, "git", "checkout", "feature-branch")
 			})
 
-			It("creates worktree successfully using detached HEAD", func() {
-				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 999)
+			It("creates clone successfully regardless of main repo state", func() {
+				clonePath, err := manager.CreateClone(ctx, repoPath, "feature-branch", 999)
 				Expect(err).To(BeNil())
 				repoName := filepath.Base(repoPath)
 				Expect(
-					worktreePath,
+					clonePath,
 				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-999")))
 
-				// Verify worktree directory exists
-				info, err := os.Stat(worktreePath)
+				// Verify clone directory exists
+				info, err := os.Stat(clonePath)
 				Expect(err).To(BeNil())
 				Expect(info.IsDir()).To(BeTrue())
 
-				// Verify worktree has the correct content (same as branch)
-				readmeContent, err := os.ReadFile(filepath.Join(worktreePath, "feature.txt"))
+				// Verify clone has the correct content (same as branch)
+				readmeContent, err := os.ReadFile(filepath.Join(clonePath, "feature.txt"))
 				Expect(err).To(BeNil())
 				Expect(string(readmeContent)).To(Equal("Feature content\n"))
 			})
 		})
 
-		Context("with stale worktree from previous run", func() {
+		Context("with stale clone from previous run", func() {
 			BeforeEach(func() {
-				// Create initial worktree
-				_, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 456)
+				// Create initial clone
+				_, err := manager.CreateClone(ctx, repoPath, "feature-branch", 456)
 				Expect(err).To(BeNil())
 			})
 
-			It("removes stale worktree and creates fresh one", func() {
-				worktreePath, err := manager.CreateWorktree(ctx, repoPath, "feature-branch", 456)
+			It("removes stale clone and creates fresh one", func() {
+				clonePath, err := manager.CreateClone(ctx, repoPath, "feature-branch", 456)
 				Expect(err).To(BeNil())
 				repoName := filepath.Base(repoPath)
 				Expect(
-					worktreePath,
+					clonePath,
 				).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-456")))
 
-				// Verify worktree exists
-				_, err = os.Stat(worktreePath)
+				// Verify clone exists
+				_, err = os.Stat(clonePath)
 				Expect(err).To(BeNil())
 			})
 		})
 
 		Context("with non-existent branch", func() {
 			It("returns error", func() {
-				_, err := manager.CreateWorktree(ctx, repoPath, "nonexistent-branch", 789)
+				_, err := manager.CreateClone(ctx, repoPath, "nonexistent-branch", 789)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).To(ContainSubstring("branch not found: nonexistent-branch"))
 			})
@@ -145,14 +145,14 @@ var _ = Describe("WorktreeManager", func() {
 
 		Context("with non-existent repo path", func() {
 			It("returns error", func() {
-				_, err := manager.CreateWorktree(ctx, "/nonexistent/path", "feature-branch", 999)
+				_, err := manager.CreateClone(ctx, "/nonexistent/path", "feature-branch", 999)
 				Expect(err).NotTo(BeNil())
 				Expect(err.Error()).To(ContainSubstring("local path not found: /nonexistent/path"))
 			})
 		})
 	})
 
-	Describe("RemoveWorktree", func() {
+	Describe("RemoveClone", func() {
 		var repoPath string
 
 		BeforeEach(func() {
@@ -160,34 +160,34 @@ var _ = Describe("WorktreeManager", func() {
 			createRemoteBranch(repoPath, "test-branch")
 		})
 
-		Context("with non-existent worktree", func() {
+		Context("with non-existent clone", func() {
 			It("returns nil (idempotent)", func() {
-				nonExistentPath := filepath.Join(repoPath, ".worktrees", "pr-nonexistent")
-				err := manager.RemoveWorktree(ctx, repoPath, nonExistentPath)
+				nonExistentPath := filepath.Join(os.TempDir(), "pr-reviewer-nonexistent")
+				err := manager.RemoveClone(ctx, nonExistentPath)
 				Expect(err).To(BeNil())
 			})
 		})
 
-		Context("with existing worktree", func() {
-			var worktreePath string
+		Context("with existing clone", func() {
+			var clonePath string
 
 			BeforeEach(func() {
 				var err error
-				worktreePath, err = manager.CreateWorktree(ctx, repoPath, "test-branch", 111)
+				clonePath, err = manager.CreateClone(ctx, repoPath, "test-branch", 111)
 				Expect(err).To(BeNil())
 			})
 
-			It("removes worktree successfully", func() {
-				// Verify worktree exists
-				_, err := os.Stat(worktreePath)
+			It("removes clone successfully", func() {
+				// Verify clone exists
+				_, err := os.Stat(clonePath)
 				Expect(err).To(BeNil())
 
-				// Remove worktree
-				err = manager.RemoveWorktree(ctx, repoPath, worktreePath)
+				// Remove clone
+				err = manager.RemoveClone(ctx, clonePath)
 				Expect(err).To(BeNil())
 
-				// Verify worktree is gone
-				_, err = os.Stat(worktreePath)
+				// Verify clone is gone
+				_, err = os.Stat(clonePath)
 				Expect(os.IsNotExist(err)).To(BeTrue())
 			})
 		})
@@ -206,25 +206,26 @@ var _ = Describe("WorktreeManager", func() {
 			err := manager.Fetch(ctx, repoPath)
 			Expect(err).To(BeNil())
 
-			// Create worktree
-			worktreePath, err := manager.CreateWorktree(ctx, repoPath, "pr-branch", 42)
+			// Create clone
+			clonePath, err := manager.CreateClone(ctx, repoPath, "pr-branch", 42)
 			Expect(err).To(BeNil())
 			repoName := filepath.Base(repoPath)
 			Expect(
-				worktreePath,
+				clonePath,
 			).To(Equal(filepath.Join(os.TempDir(), "pr-reviewer-"+repoName+"-pr-42")))
 
-			// Verify worktree exists and has git repo
-			gitFile := filepath.Join(worktreePath, ".git")
-			_, err = os.Stat(gitFile)
+			// Verify clone exists and has standalone git directory
+			gitDir := filepath.Join(clonePath, ".git")
+			info, err := os.Stat(gitDir)
+			Expect(err).To(BeNil())
+			Expect(info.IsDir()).To(BeTrue()) // Should be a directory, not a file
+
+			// Remove clone
+			err = manager.RemoveClone(ctx, clonePath)
 			Expect(err).To(BeNil())
 
-			// Remove worktree
-			err = manager.RemoveWorktree(ctx, repoPath, worktreePath)
-			Expect(err).To(BeNil())
-
-			// Verify worktree is gone
-			_, err = os.Stat(worktreePath)
+			// Verify clone is gone
+			_, err = os.Stat(clonePath)
 			Expect(os.IsNotExist(err)).To(BeTrue())
 		})
 	})

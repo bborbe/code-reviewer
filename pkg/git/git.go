@@ -16,18 +16,18 @@ import (
 	"github.com/bborbe/errors"
 )
 
-// WorktreeManager manages git worktrees for isolated PR review.
+// WorktreeManager manages git clones for isolated PR review.
 //
 //counterfeiter:generate -o ../../mocks/worktree-manager.go --fake-name WorktreeManager . WorktreeManager
 type WorktreeManager interface {
 	Fetch(ctx context.Context, repoPath string) error
-	CreateWorktree(
+	CreateClone(
 		ctx context.Context,
 		repoPath string,
 		branch string,
 		prNumber int,
-	) (worktreePath string, err error)
-	RemoveWorktree(ctx context.Context, repoPath string, worktreePath string) error
+	) (clonePath string, err error)
+	RemoveClone(ctx context.Context, clonePath string) error
 }
 
 // NewWorktreeManager creates a WorktreeManager that uses git CLI.
@@ -50,10 +50,10 @@ func (m *worktreeManager) Fetch(ctx context.Context, repoPath string) error {
 	return nil
 }
 
-// CreateWorktree creates a git worktree for the given branch.
-// Worktree path is deterministic: <repoPath>/.worktrees/pr-<number>
-// If a stale worktree exists, it is removed first.
-func (m *worktreeManager) CreateWorktree(
+// CreateClone creates a local clone for the given branch.
+// Clone path is deterministic: /tmp/pr-reviewer-<repoName>-pr-<number>
+// If a stale clone exists, it is removed first.
+func (m *worktreeManager) CreateClone(
 	ctx context.Context,
 	repoPath string,
 	branch string,
@@ -63,52 +63,55 @@ func (m *worktreeManager) CreateWorktree(
 		return "", errors.Wrap(ctx, err, "validate repo path failed")
 	}
 
-	worktreePath := m.worktreePath(repoPath, prNumber)
+	clonePath := m.clonePath(repoPath, prNumber)
 
-	// Remove stale worktree if it exists
-	if _, err := os.Stat(worktreePath); err == nil {
-		if err := m.RemoveWorktree(ctx, repoPath, worktreePath); err != nil {
-			// Fallback: force-remove directory and prune git worktree list
-			if removeErr := os.RemoveAll(worktreePath); removeErr != nil {
-				return "", errors.Wrap(ctx, removeErr, "remove stale worktree directory failed")
-			}
-			_ = m.runGit(ctx, repoPath, "worktree", "prune")
+	// Remove stale clone if it exists
+	if _, err := os.Stat(clonePath); err == nil {
+		if err := m.RemoveClone(ctx, clonePath); err != nil {
+			return "", errors.Wrap(ctx, err, "remove stale clone failed")
 		}
 	}
 
-	// Create worktree with detached HEAD at origin/branch
-	// This avoids "branch already checked out" error if the branch is checked out in main repo
+	// Clone repository locally (uses hardlinks for fast cloning)
+	// #nosec G204 -- repoPath is validated by validateRepoPath, clonePath is constructed safely
+	cmd := exec.CommandContext(ctx, "git", "clone", "--local", "--no-checkout", repoPath, clonePath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("git clone: %s", strings.TrimSpace(stderr.String()))
+	}
+
+	// Checkout the branch (detached HEAD)
 	remoteBranch := "origin/" + branch
-	err := m.runGit(ctx, repoPath, "worktree", "add", "--detach", worktreePath, remoteBranch)
-	if err != nil {
-		if strings.Contains(err.Error(), "invalid reference") {
+	// #nosec G204 -- clonePath is constructed safely, branch is validated by git itself
+	checkoutCmd := exec.CommandContext(ctx, "git", "-C", clonePath, "checkout", remoteBranch)
+	checkoutCmd.Stderr = &stderr
+
+	if err := checkoutCmd.Run(); err != nil {
+		if strings.Contains(stderr.String(), "invalid reference") ||
+			strings.Contains(stderr.String(), "pathspec") {
 			return "", fmt.Errorf("branch not found: %s", branch)
 		}
-		return "", errors.Wrap(ctx, err, "git worktree add failed")
+		return "", fmt.Errorf("git checkout: %s", strings.TrimSpace(stderr.String()))
 	}
 
-	return worktreePath, nil
+	return clonePath, nil
 }
 
-// RemoveWorktree removes a git worktree.
-// Idempotent: returns nil if worktree doesn't exist.
-func (m *worktreeManager) RemoveWorktree(
+// RemoveClone removes a git clone directory.
+// Idempotent: returns nil if clone doesn't exist.
+func (m *worktreeManager) RemoveClone(
 	ctx context.Context,
-	repoPath string,
-	worktreePath string,
+	clonePath string,
 ) error {
-	if err := m.validateRepoPath(ctx, repoPath); err != nil {
-		return errors.Wrap(ctx, err, "validate repo path failed")
-	}
-
-	// Check if worktree exists
-	if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
+	// Check if clone exists
+	if _, err := os.Stat(clonePath); os.IsNotExist(err) {
 		return nil // idempotent
 	}
 
-	err := m.runGit(ctx, repoPath, "worktree", "remove", worktreePath, "--force")
-	if err != nil {
-		return errors.Wrap(ctx, err, "git worktree remove failed")
+	if err := os.RemoveAll(clonePath); err != nil {
+		return errors.Wrap(ctx, err, "remove clone directory failed")
 	}
 
 	return nil
@@ -138,9 +141,9 @@ func (m *worktreeManager) validateRepoPath(ctx context.Context, repoPath string)
 	return nil
 }
 
-// worktreePath generates the deterministic worktree path under os.TempDir().
+// clonePath generates the deterministic clone path under os.TempDir().
 // Uses repo basename to avoid collisions between different repos.
-func (m *worktreeManager) worktreePath(repoPath string, prNumber int) string {
+func (m *worktreeManager) clonePath(repoPath string, prNumber int) string {
 	repoName := filepath.Base(repoPath)
 	return filepath.Join(os.TempDir(), fmt.Sprintf("pr-reviewer-%s-pr-%d", repoName, prNumber))
 }

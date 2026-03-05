@@ -123,8 +123,8 @@ func runGitHub(
 	}
 	logVerbose(verbose, "source branch: %s, target branch: %s", branches.Source, branches.Target)
 
-	// Create worktree and run review
-	worktreePath, cleanup, err := createWorktreeAndFetch(
+	// Create clone and run review
+	clonePath, cleanup, err := createCloneAndFetch(
 		ctx,
 		verbose,
 		repoPath,
@@ -144,7 +144,7 @@ func runGitHub(
 	reviewText, result, err := runReview(
 		ctx,
 		reviewer,
-		worktreePath,
+		clonePath,
 		reviewCommand,
 		cfg.ResolvedModel(),
 		prInfo,
@@ -203,8 +203,8 @@ func runBitbucket(
 	}
 	logVerbose(verbose, "source branch: %s, target branch: %s", branches.Source, branches.Target)
 
-	// Create worktree and run review
-	worktreePath, cleanup, err := createWorktreeAndFetch(
+	// Create clone and run review
+	clonePath, cleanup, err := createCloneAndFetch(
 		ctx,
 		verbose,
 		repoPath,
@@ -224,7 +224,7 @@ func runBitbucket(
 	reviewText, result, err := runReview(
 		ctx,
 		reviewer,
-		worktreePath,
+		clonePath,
 		reviewCommand,
 		cfg.ResolvedModel(),
 		prInfo,
@@ -246,9 +246,9 @@ func runBitbucket(
 	)
 }
 
-// createWorktreeAndFetch creates a worktree and fetches latest changes.
-// Returns worktree path and cleanup function.
-func createWorktreeAndFetch(
+// createCloneAndFetch creates a local clone and fetches latest changes.
+// Returns clone path and cleanup function.
+func createCloneAndFetch(
 	ctx context.Context,
 	verbose bool,
 	repoPath, branch string,
@@ -262,20 +262,19 @@ func createWorktreeAndFetch(
 		return "", nil, errors.Wrap(ctx, err, "fetch failed")
 	}
 
-	// Create worktree
-	logAlways("creating worktree for branch %s...", branch)
-	worktreePath, err := worktreeManager.CreateWorktree(ctx, repoPath, branch, prNumber)
+	// Create clone
+	logAlways("creating clone for branch %s...", branch)
+	clonePath, err := worktreeManager.CreateClone(ctx, repoPath, branch, prNumber)
 	if err != nil {
-		return "", nil, errors.Wrap(ctx, err, "create worktree failed")
+		return "", nil, errors.Wrap(ctx, err, "create clone failed")
 	}
-	logVerbose(verbose, "created worktree: %s", worktreePath)
+	logVerbose(verbose, "created clone: %s", clonePath)
 
 	cleanup := func() {
 		cleanupCtx := context.Background()
-		if cleanupErr := worktreeManager.RemoveWorktree(
+		if cleanupErr := worktreeManager.RemoveClone(
 			cleanupCtx,
-			repoPath,
-			worktreePath,
+			clonePath,
 		); cleanupErr != nil {
 			fmt.Fprintf(
 				os.Stderr,
@@ -285,7 +284,7 @@ func createWorktreeAndFetch(
 		}
 	}
 
-	return worktreePath, cleanup, nil
+	return clonePath, cleanup, nil
 }
 
 // runReview executes the Claude review and returns the review text and verdict.
