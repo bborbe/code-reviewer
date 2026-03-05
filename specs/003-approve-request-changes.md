@@ -2,7 +2,7 @@
 tags:
   - dark-factory
   - spec
-status: prompted
+status: completed
 ---
 Tags: [[Dark Factory - Spec Writing Guide]]
 

@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.3.0
+
+- Wire verdict-based review submission into main workflow
+- Add --comment-only flag to skip verdict and post as plain comment
+- Log detected verdict and reason to stderr
+
 ## v0.2.0
 
 - Add verdict parser for review output analysis (approve/request-changes/comment)
