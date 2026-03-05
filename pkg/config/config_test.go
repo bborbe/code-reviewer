@@ -214,6 +214,130 @@ repos:
 			})
 		})
 
+		Context("without bitbucket section", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithoutBitbucket := `repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithoutBitbucket), 0600)
+				Expect(err).To(BeNil())
+				// Ensure default env var is unset so token resolves to empty
+				err = os.Unsetenv("BITBUCKET_TOKEN")
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It(
+				"ResolvedBitbucketToken falls back to default env var and returns empty when unset",
+				func() {
+					Expect(cfg.ResolvedBitbucketToken()).To(Equal(""))
+				},
+			)
+		})
+
+		Context("without bitbucket section but default env var set", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithoutBitbucket := `repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithoutBitbucket), 0600)
+				Expect(err).To(BeNil())
+				err = os.Setenv("BITBUCKET_TOKEN", "default-bitbucket-token")
+				Expect(err).To(BeNil())
+			})
+
+			AfterEach(func() {
+				err := os.Unsetenv("BITBUCKET_TOKEN")
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It("ResolvedBitbucketToken returns the default env var value", func() {
+				Expect(cfg.ResolvedBitbucketToken()).To(Equal("default-bitbucket-token"))
+			})
+		})
+
+		Context("with bitbucket.token as env var reference", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithEnvVar := `bitbucket:
+  token: ${TEST_BITBUCKET_TOKEN}
+repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithEnvVar), 0600)
+				Expect(err).To(BeNil())
+			})
+
+			Context("when env var is set", func() {
+				BeforeEach(func() {
+					err := os.Setenv("TEST_BITBUCKET_TOKEN", "test-bitbucket-token")
+					Expect(err).To(BeNil())
+				})
+
+				AfterEach(func() {
+					err := os.Unsetenv("TEST_BITBUCKET_TOKEN")
+					Expect(err).To(BeNil())
+				})
+
+				It("returns no error", func() {
+					Expect(err).To(BeNil())
+				})
+
+				It("ResolvedBitbucketToken returns the env var value", func() {
+					Expect(cfg.ResolvedBitbucketToken()).To(Equal("test-bitbucket-token"))
+				})
+			})
+
+			Context("when env var is not set", func() {
+				BeforeEach(func() {
+					err := os.Unsetenv("TEST_BITBUCKET_TOKEN")
+					Expect(err).To(BeNil())
+				})
+
+				It("returns no error", func() {
+					Expect(err).To(BeNil())
+				})
+
+				It("ResolvedBitbucketToken returns empty string", func() {
+					Expect(cfg.ResolvedBitbucketToken()).To(Equal(""))
+				})
+			})
+		})
+
+		Context("with bitbucket.token as literal value", func() {
+			BeforeEach(func() {
+				configPath = filepath.Join(tmpDir, "config.yaml")
+				yamlWithLiteral := `bitbucket:
+  token: literal-bitbucket-token
+repos:
+  - url: https://github.com/bborbe/teamvault-docker
+    path: /home/user/teamvault-docker
+`
+				err := os.WriteFile(configPath, []byte(yamlWithLiteral), 0600)
+				Expect(err).To(BeNil())
+			})
+
+			It("returns no error", func() {
+				Expect(err).To(BeNil())
+			})
+
+			It("ResolvedBitbucketToken returns the literal value", func() {
+				Expect(cfg.ResolvedBitbucketToken()).To(Equal("literal-bitbucket-token"))
+			})
+		})
+
 		Context("with missing file", func() {
 			BeforeEach(func() {
 				configPath = filepath.Join(tmpDir, "nonexistent.yaml")

@@ -22,6 +22,11 @@ type GitHubConfig struct {
 	Token string `yaml:"token"`
 }
 
+// BitbucketConfig holds Bitbucket-specific configuration.
+type BitbucketConfig struct {
+	Token string `yaml:"token"`
+}
+
 // DefaultModel is the default Claude model to use when not specified in config.
 const DefaultModel = "sonnet"
 
@@ -29,11 +34,16 @@ const DefaultModel = "sonnet"
 // #nosec G101 -- not a credential, just an env var name
 const DefaultGitHubToken = "PR_REVIEWER_GITHUB_TOKEN"
 
+// DefaultBitbucketToken is the default env var name for the Bitbucket token.
+// #nosec G101 -- not a credential, just an env var name
+const DefaultBitbucketToken = "BITBUCKET_TOKEN"
+
 // Config holds the pr-reviewer configuration.
 type Config struct {
-	GitHub GitHubConfig `yaml:"github"`
-	Model  string       `yaml:"model"`
-	Repos  []RepoConfig `yaml:"repos"`
+	GitHub    GitHubConfig    `yaml:"github"`
+	Bitbucket BitbucketConfig `yaml:"bitbucket"`
+	Model     string          `yaml:"model"`
+	Repos     []RepoConfig    `yaml:"repos"`
 }
 
 // RepoConfig maps a repository URL to a local path.
@@ -69,6 +79,15 @@ func (c *Config) ResolvedGitHubToken() string {
 		return resolveEnvVar(c.GitHub.Token)
 	}
 	return os.Getenv(DefaultGitHubToken)
+}
+
+// ResolvedBitbucketToken returns the Bitbucket token with environment variable resolution.
+// If no token is configured, falls back to DefaultBitbucketToken env var.
+func (c *Config) ResolvedBitbucketToken() string {
+	if c.Bitbucket.Token != "" {
+		return resolveEnvVar(c.Bitbucket.Token)
+	}
+	return os.Getenv(DefaultBitbucketToken)
 }
 
 // ResolvedModel returns the configured model if non-empty, otherwise returns DefaultModel.
