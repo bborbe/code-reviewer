@@ -26,7 +26,6 @@ type PRBranches struct {
 type Client interface {
 	GetPRBranches(ctx context.Context, host, project, repo string, number int) (PRBranches, error)
 	PostComment(ctx context.Context, host, project, repo string, number int, body string) error
-	GetProfile(ctx context.Context, host string) (Profile, error)
 	Approve(ctx context.Context, host, project, repo string, number int) error
 	NeedsWork(ctx context.Context, host, project, repo string, number int, userSlug string) error
 }
@@ -56,11 +55,6 @@ type prResponse struct {
 
 type commentRequest struct {
 	Text string `json:"text"`
-}
-
-// Profile represents the authenticated user's profile information.
-type Profile struct {
-	Slug string `json:"slug"`
 }
 
 type participantRequest struct {
@@ -160,44 +154,6 @@ func (c *httpClient) PostComment(
 	}
 
 	return nil
-}
-
-// GetProfile fetches the authenticated user's profile.
-func (c *httpClient) GetProfile(ctx context.Context, host string) (Profile, error) {
-	url := c.buildURL(host, "/rest/api/1.0/profile")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return Profile{}, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+c.token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return Profile{}, fmt.Errorf("request failed for %s: %w", host, err)
-	}
-	defer resp.Body.Close()
-
-	if err := checkProfileResponseStatus(resp, host); err != nil {
-		return Profile{}, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Profile{}, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var profile Profile
-	if err := json.Unmarshal(body, &profile); err != nil {
-		return Profile{}, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if profile.Slug == "" {
-		return Profile{}, fmt.Errorf("profile response missing slug")
-	}
-
-	return profile, nil
 }
 
 // Approve approves a pull request.
@@ -302,21 +258,6 @@ func checkResponseStatus(resp *http.Response, host, project, repo string, number
 	case http.StatusNotFound:
 		return fmt.Errorf("PR not found: %s/projects/%s/repos/%s/pull-requests/%d",
 			host, project, repo, number)
-	default:
-		return fmt.Errorf("unexpected status %d from %s", resp.StatusCode, host)
-	}
-}
-
-// checkProfileResponseStatus validates HTTP response status for profile requests.
-// Token is intentionally excluded from error messages for security.
-func checkProfileResponseStatus(resp *http.Response, host string) error {
-	switch resp.StatusCode {
-	case http.StatusOK:
-		return nil
-	case http.StatusUnauthorized:
-		return fmt.Errorf("authentication failed for %s", host)
-	case http.StatusForbidden:
-		return fmt.Errorf("insufficient permissions for %s", host)
 	default:
 		return fmt.Errorf("unexpected status %d from %s", resp.StatusCode, host)
 	}

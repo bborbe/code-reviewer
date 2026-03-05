@@ -221,8 +221,16 @@ func runBitbucket(
 		return err
 	}
 
-	// Post comment (Bitbucket SubmitReview is spec 005)
-	return submitBitbucketReview(ctx, commentOnly, result, bbClient, prInfo, reviewText)
+	// Post comment and submit verdict
+	return submitBitbucketReview(
+		ctx,
+		commentOnly,
+		result,
+		bbClient,
+		prInfo,
+		reviewText,
+		cfg.Bitbucket.Username,
+	)
 }
 
 // createWorktreeAndFetch creates a worktree and fetches latest changes.
@@ -362,6 +370,7 @@ func submitBitbucketReview(
 	bbClient bitbucket.Client,
 	prInfo *prurl.PRInfo,
 	reviewText string,
+	username string,
 ) error {
 	// Always post comment first
 	logAlways("posting comment...")
@@ -399,19 +408,19 @@ func submitBitbucketReview(
 	}
 
 	if result.Verdict == verdict.VerdictRequestChanges {
-		logAlways("marking PR as needs-work...")
-		// Get user slug for needs-work API
-		profile, err := bbClient.GetProfile(ctx, prInfo.Host)
-		if err != nil {
-			return errors.Wrap(ctx, err, "get profile failed")
+		if username == "" {
+			logAlways("skipping needs-work verdict (bitbucket.username not configured)")
+			logAlways("done")
+			return nil
 		}
+		logAlways("marking PR as needs-work...")
 		if err := bbClient.NeedsWork(
 			ctx,
 			prInfo.Host,
 			prInfo.Project,
 			prInfo.Repo,
 			prInfo.Number,
-			profile.Slug,
+			username,
 		); err != nil {
 			return errors.Wrap(ctx, err, "needs-work failed")
 		}

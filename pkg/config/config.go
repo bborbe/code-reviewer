@@ -24,7 +24,8 @@ type GitHubConfig struct {
 
 // BitbucketConfig holds Bitbucket-specific configuration.
 type BitbucketConfig struct {
-	Token string `yaml:"token"`
+	Token    string `yaml:"token"`
+	Username string `yaml:"username"`
 }
 
 // DefaultModel is the default Claude model to use when not specified in config.

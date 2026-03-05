@@ -41,20 +41,6 @@ type BitbucketClient struct {
 		result1 bitbucket.PRBranches
 		result2 error
 	}
-	GetProfileStub        func(context.Context, string) (bitbucket.Profile, error)
-	getProfileMutex       sync.RWMutex
-	getProfileArgsForCall []struct {
-		arg1 context.Context
-		arg2 string
-	}
-	getProfileReturns struct {
-		result1 bitbucket.Profile
-		result2 error
-	}
-	getProfileReturnsOnCall map[int]struct {
-		result1 bitbucket.Profile
-		result2 error
-	}
 	NeedsWorkStub        func(context.Context, string, string, string, int, string) error
 	needsWorkMutex       sync.RWMutex
 	needsWorkArgsForCall []struct {
@@ -220,71 +206,6 @@ func (fake *BitbucketClient) GetPRBranchesReturnsOnCall(i int, result1 bitbucket
 	}
 	fake.getPRBranchesReturnsOnCall[i] = struct {
 		result1 bitbucket.PRBranches
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *BitbucketClient) GetProfile(arg1 context.Context, arg2 string) (bitbucket.Profile, error) {
-	fake.getProfileMutex.Lock()
-	ret, specificReturn := fake.getProfileReturnsOnCall[len(fake.getProfileArgsForCall)]
-	fake.getProfileArgsForCall = append(fake.getProfileArgsForCall, struct {
-		arg1 context.Context
-		arg2 string
-	}{arg1, arg2})
-	stub := fake.GetProfileStub
-	fakeReturns := fake.getProfileReturns
-	fake.recordInvocation("GetProfile", []interface{}{arg1, arg2})
-	fake.getProfileMutex.Unlock()
-	if stub != nil {
-		return stub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fakeReturns.result1, fakeReturns.result2
-}
-
-func (fake *BitbucketClient) GetProfileCallCount() int {
-	fake.getProfileMutex.RLock()
-	defer fake.getProfileMutex.RUnlock()
-	return len(fake.getProfileArgsForCall)
-}
-
-func (fake *BitbucketClient) GetProfileCalls(stub func(context.Context, string) (bitbucket.Profile, error)) {
-	fake.getProfileMutex.Lock()
-	defer fake.getProfileMutex.Unlock()
-	fake.GetProfileStub = stub
-}
-
-func (fake *BitbucketClient) GetProfileArgsForCall(i int) (context.Context, string) {
-	fake.getProfileMutex.RLock()
-	defer fake.getProfileMutex.RUnlock()
-	argsForCall := fake.getProfileArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *BitbucketClient) GetProfileReturns(result1 bitbucket.Profile, result2 error) {
-	fake.getProfileMutex.Lock()
-	defer fake.getProfileMutex.Unlock()
-	fake.GetProfileStub = nil
-	fake.getProfileReturns = struct {
-		result1 bitbucket.Profile
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *BitbucketClient) GetProfileReturnsOnCall(i int, result1 bitbucket.Profile, result2 error) {
-	fake.getProfileMutex.Lock()
-	defer fake.getProfileMutex.Unlock()
-	fake.GetProfileStub = nil
-	if fake.getProfileReturnsOnCall == nil {
-		fake.getProfileReturnsOnCall = make(map[int]struct {
-			result1 bitbucket.Profile
-			result2 error
-		})
-	}
-	fake.getProfileReturnsOnCall[i] = struct {
-		result1 bitbucket.Profile
 		result2 error
 	}{result1, result2}
 }

@@ -8,6 +8,13 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.5.1
+
+- Fix Bitbucket needs-work verdict by replacing broken /profile endpoint with configurable username
+- Remove GetProfile from Bitbucket client (404 on Bitbucket Data Center)
+- Add bitbucket.username config field for needs-work participant API
+- Fix /pr-review vendor/node_modules exclusion for nested directories
+
 ## v0.5.0
 
 - Use /pr-review command with target branch for diff-scoped reviews instead of /code-review
