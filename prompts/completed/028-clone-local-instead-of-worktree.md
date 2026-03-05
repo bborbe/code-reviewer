@@ -1,5 +1,12 @@
 ---
-status: queued
+status: completed
+summary: Replaced git worktree with git clone --local for Docker volume compatibility
+container: pr-reviewer-028-clone-local-instead-of-worktree
+dark-factory-version: dev
+created: "2026-03-05T20:31:34Z"
+queued: "2026-03-05T20:31:34Z"
+started: "2026-03-05T20:31:34Z"
+completed: "2026-03-05T20:37:17Z"
 ---
 <objective>
 Replace git worktree with `git clone --local` to /tmp. Worktrees create a `.git` file with absolute host paths that break when mounted into Docker containers. A local clone creates a standalone `.git` directory that works with Docker volume mounts.
