@@ -8,6 +8,32 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.5.7
+
+- Remove useDocker toggle, always use Docker (claude-yolo) for reviews
+- Remove host-based claudeReviewer
+
+## v0.5.6
+
+- Add configurable autoApprove field (default false) to guard approve API calls
+- Refactor submitGitHubReview and submitBitbucketReview to respect autoApprove setting
+
+## v0.5.5
+
+- Add Docker-based review executor using claude-yolo container
+- Add useDocker and containerImage config fields
+- Mount ~/.claude-yolo as Claude config inside container
+
+## v0.5.4
+
+- Strip JSON verdict block from review text before posting as PR comment
+
+## v0.5.3
+
+- Add JSON verdict parser (parseJSONVerdict) with fallback to heuristic section scanning
+- Add StripJSONVerdict to remove verdict block from review output
+- Support JSON verdict inside markdown code fences
+
 ## v0.5.2
 
 - Fix verdict parser treating markdown horizontal rules (---) as must-fix content
