@@ -8,6 +8,15 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.5.9
+
+- Fix Docker executor to use YOLO_PROMPT_FILE and YOLO_MODEL env vars (matching dark-factory pattern)
+- Extract review result from stream-formatter output via --- DONE --- marker
+
+## v0.5.8
+
+- Replace git worktree with git clone --local for Docker-compatible standalone repos
+
 ## v0.5.7
 
 - Remove useDocker toggle, always use Docker (claude-yolo) for reviews

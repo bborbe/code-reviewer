@@ -76,7 +76,7 @@ exit 0
 
 					result, err := reviewer.Review(ctx, worktreeDir, "/code-review", "sonnet")
 					Expect(err).To(BeNil())
-					Expect(result).To(Equal("Docker review output\n"))
+					Expect(result).To(Equal("Docker review output"))
 				})
 			})
 
@@ -111,11 +111,11 @@ exit 1
 
 			Context("with custom model parameter", func() {
 				BeforeEach(func() {
-					// Create mock docker script that verifies the model is passed correctly
+					// Create mock docker script that verifies YOLO_MODEL env var is passed
 					scriptContent := `#!/bin/sh
-# Check that model parameter is present in the arguments
+# Check that YOLO_MODEL env var is passed via -e flag
 for arg in "$@"; do
-  if [ "$arg" = "opus" ]; then
+  if [ "$arg" = "YOLO_MODEL=opus" ]; then
     echo "Model parameter found"
     exit 0
   fi
@@ -140,7 +140,7 @@ exit 1
 
 					result, err := reviewer.Review(ctx, worktreeDir, "/code-review", "opus")
 					Expect(err).To(BeNil())
-					Expect(result).To(Equal("Model parameter found\n"))
+					Expect(result).To(Equal("Model parameter found"))
 				})
 			})
 
@@ -177,7 +177,7 @@ exit 1
 
 					result, err := reviewer.Review(ctx, worktreeDir, "/code-review", "sonnet")
 					Expect(err).To(BeNil())
-					Expect(result).To(Equal("Volume mount flag found\n"))
+					Expect(result).To(Equal("Volume mount flag found"))
 				})
 			})
 		})
