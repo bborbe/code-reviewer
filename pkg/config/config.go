@@ -39,12 +39,17 @@ const DefaultGitHubToken = "PR_REVIEWER_GITHUB_TOKEN"
 // #nosec G101 -- not a credential, just an env var name
 const DefaultBitbucketToken = "BITBUCKET_TOKEN"
 
+// DefaultContainerImage is the default Docker image for sandboxed reviews.
+const DefaultContainerImage = "docker.io/bborbe/claude-yolo:v0.0.9"
+
 // Config holds the pr-reviewer configuration.
 type Config struct {
-	GitHub    GitHubConfig    `yaml:"github"`
-	Bitbucket BitbucketConfig `yaml:"bitbucket"`
-	Model     string          `yaml:"model"`
-	Repos     []RepoConfig    `yaml:"repos"`
+	GitHub         GitHubConfig    `yaml:"github"`
+	Bitbucket      BitbucketConfig `yaml:"bitbucket"`
+	Model          string          `yaml:"model"`
+	UseDocker      bool            `yaml:"useDocker"`
+	ContainerImage string          `yaml:"containerImage"`
+	Repos          []RepoConfig    `yaml:"repos"`
 }
 
 // RepoConfig maps a repository URL to a local path.
@@ -97,6 +102,15 @@ func (c *Config) ResolvedModel() string {
 		return c.Model
 	}
 	return DefaultModel
+}
+
+// ResolvedContainerImage returns the configured container image if non-empty,
+// otherwise returns DefaultContainerImage.
+func (c *Config) ResolvedContainerImage() string {
+	if c.ContainerImage != "" {
+		return c.ContainerImage
+	}
+	return DefaultContainerImage
 }
 
 // Loader loads configuration from a source.

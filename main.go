@@ -136,8 +136,15 @@ func runGitHub(
 	}
 	defer cleanup()
 
+	// Create reviewer
+	var reviewer review.Reviewer
+	if cfg.UseDocker {
+		reviewer = review.NewDockerReviewer(cfg.ResolvedContainerImage())
+	} else {
+		reviewer = review.NewClaudeReviewer()
+	}
+
 	// Run review
-	reviewer := review.NewClaudeReviewer()
 	reviewCommand := buildReviewCommand(repoInfo.ReviewCommand, branches.Target)
 	reviewText, result, err := runReview(
 		ctx,
@@ -206,8 +213,15 @@ func runBitbucket(
 	}
 	defer cleanup()
 
+	// Create reviewer
+	var reviewer review.Reviewer
+	if cfg.UseDocker {
+		reviewer = review.NewDockerReviewer(cfg.ResolvedContainerImage())
+	} else {
+		reviewer = review.NewClaudeReviewer()
+	}
+
 	// Run review
-	reviewer := review.NewClaudeReviewer()
 	reviewCommand := buildReviewCommand(repoInfo.ReviewCommand, branches.Target)
 	reviewText, result, err := runReview(
 		ctx,
