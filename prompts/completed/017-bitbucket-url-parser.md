@@ -1,6 +1,12 @@
 ---
-spec: 004-bitbucket-server-support
-status: created
+status: completed
+summary: Added Bitbucket Server URL parsing alongside existing GitHub URL parsing
+container: pr-reviewer-017-bitbucket-url-parser
+dark-factory-version: v0.17.0
+created: "2026-03-05T10:51:03Z"
+queued: "2026-03-05T10:51:03Z"
+started: "2026-03-05T10:51:03Z"
+completed: "2026-03-05T10:56:17Z"
 ---
 <objective>
 Add Bitbucket Server URL parsing alongside existing GitHub URL parsing. Extract host, project, repo, and PR number from Bitbucket Server PR URLs.

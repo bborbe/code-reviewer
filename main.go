@@ -17,6 +17,7 @@ import (
 	"github.com/bborbe/pr-reviewer/pkg/config"
 	"github.com/bborbe/pr-reviewer/pkg/git"
 	"github.com/bborbe/pr-reviewer/pkg/github"
+	"github.com/bborbe/pr-reviewer/pkg/prurl"
 	"github.com/bborbe/pr-reviewer/pkg/review"
 	"github.com/bborbe/pr-reviewer/pkg/verdict"
 	"github.com/bborbe/pr-reviewer/pkg/version"
@@ -57,7 +58,7 @@ func run(ctx context.Context, verbose bool, commentOnly bool) error {
 
 	// Parse PR URL
 	logVerbose(verbose, "parsing URL: %s", rawURL)
-	prInfo, err := github.ParsePRURL(rawURL)
+	prInfo, err := prurl.Parse(rawURL)
 	if err != nil {
 		return err
 	}
@@ -147,7 +148,7 @@ func runReviewAndPost(
 	worktreePath string,
 	reviewCommand string,
 	model string,
-	prInfo *github.PRInfo,
+	prInfo *prurl.PRInfo,
 ) error {
 	// Run review
 	logAlways("reviewing PR #%d (%s/%s)...", prInfo.Number, prInfo.Owner, prInfo.Repo)
@@ -181,7 +182,7 @@ func submitReview(
 	commentOnly bool,
 	result verdict.Result,
 	ghClient github.Client,
-	prInfo *github.PRInfo,
+	prInfo *prurl.PRInfo,
 	reviewText string,
 ) error {
 	// --comment-only flag overrides verdict

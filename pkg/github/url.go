@@ -22,6 +22,8 @@ type PRInfo struct {
 // ParsePRURL parses a GitHub PR URL and extracts owner, repo, PR number, and repo URL.
 // Expected format: https://github.com/{owner}/{repo}/pull/{number}
 // Returns error for non-GitHub URLs or malformed GitHub URLs.
+//
+// Deprecated: Use prurl.Parse instead, which supports both GitHub and Bitbucket Server URLs.
 func ParsePRURL(rawURL string) (*PRInfo, error) {
 	if rawURL == "" {
 		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
