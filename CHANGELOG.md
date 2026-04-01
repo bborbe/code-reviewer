@@ -8,6 +8,13 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.7.3
+
+- Update dependencies (docker, containerd, prometheus, otel, golang.org/x)
+- Upgrade go-git to v5.17.2
+- Upgrade moby/buildkit to v0.29.0
+- Remove stale exclude and replace directives from go.mod
+
 ## v0.7.2
 
 - upgrade golangci-lint from v1 to v2
