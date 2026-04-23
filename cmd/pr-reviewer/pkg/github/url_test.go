@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/pkg/github"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/github"
 )
 
 var _ = Describe("ParsePRURL", func() {

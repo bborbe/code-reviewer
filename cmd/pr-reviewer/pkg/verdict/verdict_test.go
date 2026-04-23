@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/pkg/verdict"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/verdict"
 )
 
 var _ = Describe("Parse", func() {

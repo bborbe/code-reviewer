@@ -1,4 +1,4 @@
-module github.com/bborbe/code-reviewer
+module github.com/bborbe/code-reviewer/cmd/pr-reviewer
 
 go 1.26.2
 

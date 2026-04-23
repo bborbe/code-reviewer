@@ -14,14 +14,14 @@ import (
 
 	"github.com/bborbe/errors"
 
-	"github.com/bborbe/code-reviewer/pkg/bitbucket"
-	"github.com/bborbe/code-reviewer/pkg/config"
-	"github.com/bborbe/code-reviewer/pkg/git"
-	"github.com/bborbe/code-reviewer/pkg/github"
-	"github.com/bborbe/code-reviewer/pkg/prurl"
-	"github.com/bborbe/code-reviewer/pkg/review"
-	"github.com/bborbe/code-reviewer/pkg/verdict"
-	"github.com/bborbe/code-reviewer/pkg/version"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/bitbucket"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/config"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/git"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/github"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/prurl"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/review"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/verdict"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/version"
 )
 
 func main() {

@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## Unreleased
+
+- Transform repo to multi-module layout (trading-style): move CLI + pkg/mocks into `cmd/pr-reviewer/` with own `go.mod`; root becomes tooling-free (no `go.mod`), uses `Makefile.folder` to delegate `precommit`/`test`/`lint` to service dirs
+- Update module path to `github.com/bborbe/code-reviewer/cmd/pr-reviewer`; rewrite all imports and LDFLAGS
+- Move `.golangci.yml`, `.osv-scanner.toml`, `.trivyignore` into `cmd/pr-reviewer/`
+
 ## v0.8.0
 
 - Rename module path from `github.com/bborbe/pr-reviewer` to `github.com/bborbe/code-reviewer` (repo renamed to cover broader scope)

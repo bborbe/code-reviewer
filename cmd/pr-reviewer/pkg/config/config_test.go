@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/pkg/config"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/config"
 )
 
 var _ = Describe("Config", func() {

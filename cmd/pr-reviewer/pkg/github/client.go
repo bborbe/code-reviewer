@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bborbe/code-reviewer/pkg/verdict"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/verdict"
 )
 
 // PRBranches holds the source and target branch names of a pull request.

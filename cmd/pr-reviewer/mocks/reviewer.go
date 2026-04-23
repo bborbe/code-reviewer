@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/bborbe/code-reviewer/pkg/review"
+	"github.com/bborbe/code-reviewer/cmd/pr-reviewer/pkg/review"
 )
 
 type Reviewer struct {
