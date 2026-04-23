@@ -2,7 +2,7 @@
 tags:
   - dark-factory
   - spec
-status: draft
+status: idea
 ---
 Tags: [[Dark Factory - Spec Writing Guide]]
 
