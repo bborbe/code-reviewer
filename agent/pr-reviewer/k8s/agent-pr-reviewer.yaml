@@ -6,7 +6,7 @@ metadata:
 spec:
   assignee: pr-reviewer-agent
   priorityClassName: agent-pr-reviewer
-  image: docker.quant.benjamin-borbe.de:443/agent-pr-reviewer
+  image: '{{"DOCKER_REGISTRY" | env}}/agent-pr-reviewer'
   heartbeat: 5m
   secretName: agent-pr-reviewer
   volumeClaim: agent-pr-reviewer
