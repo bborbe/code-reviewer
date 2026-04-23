@@ -1,0 +1,24 @@
+apiVersion: agent.benjamin-borbe.de/v1
+kind: Config
+metadata:
+  name: agent-pr-reviewer
+  namespace: '{{ "NAMESPACE" | env }}'
+spec:
+  assignee: pr-reviewer-agent
+  priorityClassName: agent-pr-reviewer
+  image: docker.quant.benjamin-borbe.de:443/agent-pr-reviewer:{{branch}}
+  heartbeat: 5m
+  secretName: agent-pr-reviewer
+  volumeClaim: agent-pr-reviewer
+  volumeMountPath: /home/claude/.claude
+  env:
+    ALLOWED_TOOLS: Read,Grep,Glob,Bash(git:*),Bash(gh:*),WebFetch
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 2Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 2Gi
