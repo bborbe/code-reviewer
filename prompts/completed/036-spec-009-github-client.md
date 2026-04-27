@@ -1,6 +1,6 @@
 ---
 status: completed
-spec: ["009"]
+spec: [009-github-pr-watcher]
 summary: 'Implemented GitHub API layer: GitHubClient interface with SearchPRs/GetHeadSHA backed by go-github v62, filter.ShouldSkip/IsBotAuthor, taskid.Derive using UUID v5 SHA1, all with httptest.Server-based tests and counterfeiter mock generation'
 container: code-reviewer-036-spec-009-github-client
 dark-factory-version: v0.135.19-1-gc08c946

@@ -1,6 +1,6 @@
 ---
 status: completed
-spec: ["009"]
+spec: [009-github-pr-watcher]
 summary: Created watcher/github/ Go module scaffold with go.mod, Makefile, Dockerfile, main.go skeleton using service.Main pattern, and passing make precommit
 container: code-reviewer-035-spec-009-scaffold
 dark-factory-version: v0.135.19-1-gc08c946
