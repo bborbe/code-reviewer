@@ -1,5 +1,5 @@
 ---
-status: committing
+status: completed
 spec: [008-ensure-plugins-installer]
 summary: Wired plugins.NewInstaller into agent/pr-reviewer/main.go before factory.CreateDeliverer, created docs/claude-plugin-cli.md, and updated CHANGELOG.md with Unreleased section.
 container: code-reviewer-034-spec-008-wire-and-docs
@@ -7,6 +7,7 @@ dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-27T20:00:00Z"
 queued: "2026-04-27T19:52:38Z"
 started: "2026-04-27T19:58:08Z"
+completed: "2026-04-27T20:03:13Z"
 branch: dark-factory/ensure-plugins-installer
 ---
 
