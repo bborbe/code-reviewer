@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.1
+
+- refactor(watcher/github): flatten `pkg/` per `coding/docs/go-composition.md` — collapsed `pkg/{cursor,filter,githubclient,publisher,taskid,watcher}/` subpackages into a single `pkg/` with one file per former subpackage; renamed colliding identifiers (`State`→`Cursor`, `Load/Save`→`LoadCursor/SaveCursor`, `ShouldSkip`→`ShouldSkipPR`, `Derive`→`DeriveTaskID`, `publisher.New`→`NewCommandPublisher`); consolidated all counterfeiter mocks into `pkg/mocks/`
+- refactor(watcher/github): replace Deployment + standalone PVC with StatefulSet + embedded `volumeClaimTemplates` per trading converter pattern; add headless Service; add livenessProbe/readinessProbe + prometheus annotations + keel auto-deploy annotations + node affinity + imagePullSecrets; drop unused PriorityClass + ResourceQuota (not the convention for stateful services in this org)
+- feat(watcher/github): add HTTP server (`/healthz`, `/readiness`, `/metrics`) running concurrently with the poll loop via `bborbe/run.CancelOnFirstFinish`; new `LISTEN` env var (default `:9090`)
+
 ## v0.16.0
 
 - feat: add github-pr-watcher service (watcher/github/) — polls GitHub Search API and publishes CreateTaskCommand/UpdateFrontmatterCommand to Kafka for automatic PR review triggering
