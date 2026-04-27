@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.15.1
+
+- feat(watcher/github): add github-pr-watcher service scaffold (go.mod, Makefile, Dockerfile, main.go skeleton)
+
 ## v0.15.0
 
 - feat: add plugin installer library (`pkg/plugins/`) ensuring Claude Code plugins are installed before task handling

@@ -1,5 +1,9 @@
 ---
-status: draft
+status: prompted
+approved: "2026-04-27T20:42:49Z"
+generating: "2026-04-27T20:42:50Z"
+prompted: "2026-04-27T20:50:34Z"
+branch: dark-factory/github-pr-watcher
 ---
 
 ## Summary
