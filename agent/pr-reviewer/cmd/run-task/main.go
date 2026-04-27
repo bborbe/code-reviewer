@@ -2,18 +2,24 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command run-task is the local-CLI entry point for agent-pr-reviewer.
+//
+// Reads a markdown task file from disk, runs the agent against it, and
+// writes the updated content back to the same file. Mirrors the Kafka
+// entry point (../../main.go) but uses file I/O instead of Kafka/CQRS.
 package main
 
 import (
 	"context"
 	"os"
 
+	agentlib "github.com/bborbe/agent/lib"
 	claudelib "github.com/bborbe/agent/lib/claude"
-	libagent "github.com/bborbe/agent/lib/delivery"
 	"github.com/bborbe/cqrs/base"
 	"github.com/bborbe/errors"
 	libsentry "github.com/bborbe/sentry"
 	"github.com/bborbe/service"
+	"github.com/bborbe/vault-cli/pkg/domain"
 
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/factory"
 )
@@ -39,6 +45,9 @@ type application struct {
 	// Environment
 	Branch base.Branch `required:"true" arg:"branch" env:"BRANCH" usage:"branch" default:"dev"`
 
+	// Phase to run (framework requires explicit phase)
+	Phase domain.TaskPhase `required:"false" arg:"phase" env:"PHASE" usage:"Agent phase: planning | in_progress | ai_review" default:"in_progress"`
+
 	// Task file for local development
 	TaskFilePath string `required:"true" arg:"task-file" env:"TASK_FILE" usage:"Path to the markdown task file"`
 
@@ -46,7 +55,7 @@ type application struct {
 	GHToken string `required:"false" arg:"gh-token" env:"GH_TOKEN" usage:"GitHub token for gh CLI auth" display:"length"`
 }
 
-func (a *application) Run(ctx context.Context, sentryClient libsentry.Client) error {
+func (a *application) Run(ctx context.Context, _ libsentry.Client) error {
 	taskContent, err := os.ReadFile(
 		a.TaskFilePath,
 	) // #nosec G304 -- filePath from trusted CLI input
@@ -54,21 +63,13 @@ func (a *application) Run(ctx context.Context, sentryClient libsentry.Client) er
 		return errors.Wrapf(ctx, err, "read task file: %s", a.TaskFilePath)
 	}
 
-	deliverer := claudelib.NewResultDelivererAdapter[claudelib.AgentResult](
-		libagent.NewFileResultDeliverer(libagent.NewFallbackContentGenerator(), a.TaskFilePath),
-	)
+	deliverer := factory.CreateFileResultDeliverer(a.TaskFilePath)
 
-	taskRunner := factory.CreateTaskRunner(
-		a.ClaudeConfigDir,
-		a.AgentDir,
-		a.Model,
-		a.GHToken,
-		deliverer,
-	)
+	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken)
 
-	result, err := taskRunner.Run(ctx, string(taskContent))
+	result, err := agent.Run(ctx, a.Phase, string(taskContent), deliverer)
 	if err != nil {
-		return errors.Wrap(ctx, err, "run task")
+		return errors.Wrap(ctx, err, "agent run failed")
 	}
-	return libagent.PrintResult(ctx, *result)
+	return agentlib.PrintResult(result)
 }

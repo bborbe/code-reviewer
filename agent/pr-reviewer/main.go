@@ -2,11 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command agent-pr-reviewer is the Kafka entry point for the PR-review
+// agent — spawned as a K8s Job by task/executor with TASK_CONTENT +
+// TASK_ID + PHASE + KAFKA_BROKERS env. For local CLI mode (file-based),
+// see cmd/run-task/main.go.
 package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	agentlib "github.com/bborbe/agent/lib"
@@ -16,7 +19,7 @@ import (
 	libkafka "github.com/bborbe/kafka"
 	libsentry "github.com/bborbe/sentry"
 	"github.com/bborbe/service"
-	libtime "github.com/bborbe/time"
+	"github.com/bborbe/vault-cli/pkg/domain"
 	"github.com/golang/glog"
 
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/factory"
@@ -40,73 +43,39 @@ type application struct {
 	// Model selection
 	Model claudelib.ClaudeModel `required:"false" arg:"model" env:"MODEL" usage:"Claude model to use (sonnet, opus)" default:"sonnet"`
 
+	// Task content from agent pipeline
+	TaskContent string `required:"true" arg:"task-content" env:"TASK_CONTENT" usage:"Raw task markdown from vault"`
+
 	// Branch for Kafka result delivery
 	Branch base.Branch `required:"true" arg:"branch" env:"BRANCH" usage:"branch"`
 
+	// Phase to run (framework requires explicit phase)
+	Phase domain.TaskPhase `required:"false" arg:"phase" env:"PHASE" usage:"Agent phase: planning | in_progress | ai_review" default:"in_progress"`
+
 	// Kafka delivery (optional — only active when TASK_ID is set)
-	KafkaBrokers libkafka.Brokers `required:"false" arg:"kafka-brokers" env:"KAFKA_BROKERS" usage:"Comma separated list of Kafka brokers"`
-
-	TaskID agentlib.TaskIdentifier `required:"false" arg:"task-id" env:"TASK_ID" usage:"Agent task identifier for publishing results back to task controller"`
-
-	// Task content from agent pipeline
-	TaskContent string `required:"true" arg:"task-content" env:"TASK_CONTENT" usage:"Raw task markdown from vault"`
+	KafkaBrokers libkafka.Brokers        `required:"false" arg:"kafka-brokers" env:"KAFKA_BROKERS" usage:"Comma separated list of Kafka brokers"`
+	TaskID       agentlib.TaskIdentifier `required:"false" arg:"task-id"       env:"TASK_ID"       usage:"Agent task identifier for publishing results back to task controller"`
 
 	// GitHub token forwarded to the Claude CLI subprocess as GH_TOKEN for gh auth.
 	GHToken string `required:"false" arg:"gh-token" env:"GH_TOKEN" usage:"GitHub token for gh CLI auth" display:"length"`
 }
 
-func (a *application) Run(ctx context.Context, sentryClient libsentry.Client) error {
-	glog.V(2).Infof("agent-pr-reviewer started")
+func (a *application) Run(ctx context.Context, _ libsentry.Client) error {
+	glog.V(2).Infof("agent-pr-reviewer started phase=%s", a.Phase)
 
-	deliverer, cleanup, err := a.createDeliverer(ctx)
+	deliverer, cleanup, err := factory.CreateDeliverer(
+		ctx, a.TaskID, a.KafkaBrokers, a.Branch, a.TaskContent,
+	)
 	if err != nil {
 		return errors.Wrap(ctx, err, "create deliverer")
 	}
 	defer cleanup()
 
-	taskRunner := factory.CreateTaskRunner(
-		a.ClaudeConfigDir,
-		a.AgentDir,
-		a.Model,
-		a.GHToken,
-		deliverer,
-	)
+	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken)
 
-	result, err := taskRunner.Run(ctx, a.TaskContent)
+	result, err := agent.Run(ctx, a.Phase, a.TaskContent, deliverer)
 	if err != nil {
-		return claudelib.PrintResult(ctx, claudelib.AgentResult{
-			Status:  claudelib.AgentStatusFailed,
-			Message: fmt.Sprintf("task runner failed: %v", err),
-		})
+		return errors.Wrap(ctx, err, "agent run failed")
 	}
-
-	return claudelib.PrintResult(ctx, *result)
-}
-
-func (a *application) createDeliverer(
-	ctx context.Context,
-) (claudelib.ResultDeliverer[claudelib.AgentResult], func(), error) {
-	if a.TaskID != "" {
-		if len(a.KafkaBrokers) == 0 {
-			return nil, nil, errors.Errorf(ctx, "KAFKA_BROKERS must be set when TASK_ID is set")
-		}
-		syncProducer, err := factory.CreateSyncProducer(ctx, a.KafkaBrokers)
-		if err != nil {
-			return nil, nil, errors.Wrap(ctx, err, "create sync producer failed")
-		}
-		deliverer := factory.CreateKafkaResultDeliverer(
-			syncProducer,
-			a.Branch,
-			a.TaskID,
-			a.TaskContent,
-			libtime.NewCurrentDateTime(),
-		)
-		return deliverer, func() {
-			if err := syncProducer.Close(); err != nil {
-				glog.Warningf("close sync producer failed: %v", err)
-			}
-		}, nil
-	}
-	glog.V(2).Infof("TASK_ID not set, skipping task result publishing")
-	return claudelib.NewNoopResultDeliverer(), func() {}, nil
+	return agentlib.PrintResult(result)
 }
