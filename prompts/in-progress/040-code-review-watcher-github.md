@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Ran full code review of watcher/github with 13 specialist agents and generated 15 fix prompts covering 3 critical and 12 important findings
+container: code-reviewer-040-code-review-watcher-github
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-27T22:24:13Z"
 queued: "2026-04-27T22:28:25Z"
+started: "2026-04-27T23:14:24Z"
 ---
 
 <summary>

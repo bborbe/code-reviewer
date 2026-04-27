@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.3
+
+- chore: generate fix prompts from full code review of watcher/github — context.Background() in constructor, libtime migration, Prometheus metrics, error wrapping, factory cleanup, test coverage gaps, scope injection validation, K8s security context, and more
+
 ## v0.16.2
 
 - chore: generate fix prompts from full code review of agent/pr-reviewer — security hardening (HTTP timeout, branch validation), error wrapping migration, factory pattern compliance, test quality, and dead code cleanup
