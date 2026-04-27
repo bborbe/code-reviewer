@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-pr-watcher
+  namespace: '{{ "NAMESPACE" | env }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-pr-watcher
+  template:
+    metadata:
+      labels:
+        app: github-pr-watcher
+    spec:
+      priorityClassName: github-pr-watcher
+      containers:
+        - name: github-pr-watcher
+          image: '{{ "DOCKER_REGISTRY" | env }}/github-pr-watcher:{{ "BRANCH" | env }}'
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pr-watcher
+                  key: GH_TOKEN
+            - name: KAFKA_BROKERS
+              value: '{{ "KAFKA_BROKERS" | env }}'
+            - name: STAGE
+              value: '{{ "STAGE" | env }}'
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: cursor
+              mountPath: /data
+      volumes:
+        - name: cursor
+          persistentVolumeClaim:
+            claimName: github-pr-watcher
