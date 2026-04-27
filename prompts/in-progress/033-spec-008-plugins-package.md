@@ -1,6 +1,7 @@
 ---
-status: executing
+status: committing
 spec: [008-ensure-plugins-installer]
+summary: Created agent/pr-reviewer/pkg/plugins/ package with Commander and Installer interfaces, ExecCommander implementation, counterfeiter mocks, and full Ginkgo test suite achieving 100% statement coverage
 container: code-reviewer-033-spec-008-plugins-package
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-27T20:00:00Z"
