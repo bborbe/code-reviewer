@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package cursor
+package pkg
 
 import (
 	"context"
@@ -18,27 +18,27 @@ import (
 const DefaultCursorPath = "/data/cursor.json"
 
 // State holds the watcher's persisted cursor.
-type State struct {
+type Cursor struct {
 	LastUpdatedAt time.Time         `json:"last_updated_at"`
 	HeadSHAs      map[string]string `json:"head_shas"`
 }
 
 // Load reads cursor state from path.
 // Returns cold-start state with startTime if the file is missing or corrupt.
-func Load(ctx context.Context, path string, startTime time.Time) (State, error) {
+func LoadCursor(ctx context.Context, path string, startTime time.Time) (Cursor, error) {
 	data, err := os.ReadFile(path) // #nosec G304 -- path is config-controlled
 	if err != nil {
 		if os.IsNotExist(err) {
 			glog.V(2).
 				Infof("cursor file not found, using cold-start time=%s", startTime.Format(time.RFC3339))
-			return State{LastUpdatedAt: startTime, HeadSHAs: make(map[string]string)}, nil
+			return Cursor{LastUpdatedAt: startTime, HeadSHAs: make(map[string]string)}, nil
 		}
-		return State{}, errors.Wrapf(ctx, err, "read cursor file path=%s", path)
+		return Cursor{}, errors.Wrapf(ctx, err, "read cursor file path=%s", path)
 	}
-	var state State
+	var state Cursor
 	if err := json.Unmarshal(data, &state); err != nil {
 		glog.Warningf("cursor file corrupt, using cold-start path=%s err=%v", path, err)
-		return State{LastUpdatedAt: startTime, HeadSHAs: make(map[string]string)}, nil
+		return Cursor{LastUpdatedAt: startTime, HeadSHAs: make(map[string]string)}, nil
 	}
 	if state.HeadSHAs == nil {
 		state.HeadSHAs = make(map[string]string)
@@ -47,7 +47,7 @@ func Load(ctx context.Context, path string, startTime time.Time) (State, error) 
 }
 
 // Save persists cursor state to path atomically via a temp file + rename.
-func Save(ctx context.Context, path string, state State) error {
+func SaveCursor(ctx context.Context, path string, state Cursor) error {
 	data, err := json.Marshal(state)
 	if err != nil {
 		return errors.Wrapf(ctx, err, "marshal cursor state path=%s", path)

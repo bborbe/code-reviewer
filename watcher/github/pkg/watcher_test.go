@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package watcher_test
+package pkg_test
 
 import (
 	"context"
@@ -15,19 +15,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient"
-	ghclientmocks "github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient/mocks"
-	pubmocks "github.com/bborbe/code-reviewer/watcher/github/pkg/publisher/mocks"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/watcher"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg/mocks"
 )
 
 func newTestWatcher(
-	ghClient githubclient.GitHubClient,
-	pub *pubmocks.CommandPublisher,
+	ghClient pkg.GitHubClient,
+	pub *mocks.CommandPublisher,
 	cursorPath string,
 	startTime time.Time,
-) watcher.Watcher {
-	return watcher.NewWatcher(
+) pkg.Watcher {
+	return pkg.NewWatcher(
 		ghClient,
 		pub,
 		cursorPath,
@@ -39,12 +37,12 @@ func newTestWatcher(
 	)
 }
 
-var _ = Describe("Watcher", func() {
+var _ = Describe("pkg.Watcher", func() {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
-		ghClient   *ghclientmocks.GitHubClient
-		pub        *pubmocks.CommandPublisher
+		ghClient   *mocks.GitHubClient
+		pub        *mocks.CommandPublisher
 		tmpDir     string
 		cursorPath string
 		startTime  time.Time
@@ -52,8 +50,8 @@ var _ = Describe("Watcher", func() {
 
 	BeforeEach(func() {
 		ctx, cancel = context.WithCancel(context.Background())
-		ghClient = new(ghclientmocks.GitHubClient)
-		pub = new(pubmocks.CommandPublisher)
+		ghClient = new(mocks.GitHubClient)
+		pub = new(mocks.CommandPublisher)
 		startTime = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		var err error
 		tmpDir, err = os.MkdirTemp("", "watcher-test-*")
@@ -68,7 +66,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("No PRs returned", func() {
 		It("returns nil, cursor saved", func() {
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
+			ghClient.SearchPRsReturns(pkg.SearchResult{
 				PullRequests:  nil,
 				HasNextPage:   false,
 				RateRemaining: 100,
@@ -86,7 +84,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("New PR (no existing cursor entry)", func() {
 		It("publishes CreateTaskCommand", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      42,
 				Owner:       "bborbe",
 				Repo:        "code-reviewer",
@@ -96,8 +94,8 @@ var _ = Describe("Watcher", func() {
 				IsDraft:     false,
 				UpdatedAt:   time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -119,7 +117,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("Existing PR, same SHA", func() {
 		It("publishes nothing", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      42,
 				Owner:       "bborbe",
 				Repo:        "code-reviewer",
@@ -127,8 +125,8 @@ var _ = Describe("Watcher", func() {
 				AuthorLogin: "alice",
 				UpdatedAt:   time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -142,7 +140,7 @@ var _ = Describe("Watcher", func() {
 			Expect(pub.PublishCreateCallCount()).To(Equal(1))
 
 			// Second poll: same SHA, no publish
-			pub = new(pubmocks.CommandPublisher)
+			pub = new(mocks.CommandPublisher)
 			w = newTestWatcher(ghClient, pub, cursorPath, startTime)
 			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
 			Expect(pub.PublishCreateCallCount()).To(Equal(0))
@@ -152,7 +150,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("Force-push (existing entry, different SHA)", func() {
 		It("publishes UpdateFrontmatterCommand with correct body section", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      42,
 				Owner:       "bborbe",
 				Repo:        "code-reviewer",
@@ -162,8 +160,8 @@ var _ = Describe("Watcher", func() {
 			}
 
 			// First poll: register initial SHA
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -175,7 +173,7 @@ var _ = Describe("Watcher", func() {
 			Expect(pub.PublishCreateCallCount()).To(Equal(1))
 
 			// Second poll: new SHA (force-push)
-			pub = new(pubmocks.CommandPublisher)
+			pub = new(mocks.CommandPublisher)
 			ghClient.GetHeadSHAReturns("new-sha", nil)
 			pub.PublishUpdateFrontmatterReturns(nil)
 
@@ -192,7 +190,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("Draft PR", func() {
 		It("is skipped, no publish calls", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      1,
 				Owner:       "bborbe",
 				Repo:        "repo",
@@ -200,8 +198,8 @@ var _ = Describe("Watcher", func() {
 				IsDraft:     true,
 				UpdatedAt:   time.Now(),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -215,7 +213,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("Bot-authored PR", func() {
 		It("is skipped, no publish calls", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      2,
 				Owner:       "bborbe",
 				Repo:        "repo",
@@ -223,8 +221,8 @@ var _ = Describe("Watcher", func() {
 				IsDraft:     false,
 				UpdatedAt:   time.Now(),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -237,13 +235,13 @@ var _ = Describe("Watcher", func() {
 
 	Describe("GitHub error", func() {
 		It("Poll returns nil, cursor unchanged, no publish calls", func() {
-			ghClient.SearchPRsReturns(githubclient.SearchResult{}, errors.New("network timeout"))
+			ghClient.SearchPRsReturns(pkg.SearchResult{}, errors.New("network timeout"))
 
 			w := newTestWatcher(ghClient, pub, cursorPath, startTime)
 			err := w.Poll(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pub.PublishCreateCallCount()).To(Equal(0))
-			// Cursor file should not exist (no save after error)
+			// pkg.Cursor file should not exist (no save after error)
 			_, statErr := os.Stat(cursorPath)
 			Expect(os.IsNotExist(statErr)).To(BeTrue())
 		})
@@ -251,15 +249,15 @@ var _ = Describe("Watcher", func() {
 
 	Describe("Kafka publish fails (CreateTaskCommand)", func() {
 		It("Poll returns nil, cursor not updated for that PR", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      99,
 				Owner:       "bborbe",
 				Repo:        "repo",
 				AuthorLogin: "alice",
 				UpdatedAt:   time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -272,7 +270,7 @@ var _ = Describe("Watcher", func() {
 
 			// HeadSHAs should not include this PR since publish failed
 			// Verify by doing a second poll and checking PublishCreate is called again
-			pub2 := new(pubmocks.CommandPublisher)
+			pub2 := new(mocks.CommandPublisher)
 			pub2.PublishCreateReturns(nil)
 			w2 := newTestWatcher(ghClient, pub2, cursorPath, startTime)
 			Expect(w2.Poll(ctx)).NotTo(HaveOccurred())
@@ -287,15 +285,15 @@ var _ = Describe("Watcher", func() {
 			cancelledCtx, cancelFn := context.WithCancel(context.Background())
 			cancelFn() // already cancelled
 
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      1,
 				Owner:       "bborbe",
 				Repo:        "repo",
 				AuthorLogin: "alice",
 				UpdatedAt:   time.Now(),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 5,                                // below threshold of 10
 				RateResetAt:   time.Now().Add(-1 * time.Second), // already past
@@ -313,18 +311,18 @@ var _ = Describe("Watcher", func() {
 			cancelCtx, cancelFn := context.WithCancel(context.Background())
 
 			callCount := 0
-			ghClient.SearchPRsStub = func(c context.Context, scope string, since time.Time, page int) (githubclient.SearchResult, error) {
+			ghClient.SearchPRsStub = func(c context.Context, scope string, since time.Time, page int) (pkg.SearchResult, error) {
 				callCount++
 				if callCount == 1 {
 					cancelFn() // cancel context after first page
-					return githubclient.SearchResult{
+					return pkg.SearchResult{
 						PullRequests:  nil,
 						HasNextPage:   true,
 						NextPage:      2,
 						RateRemaining: 100,
 					}, nil
 				}
-				return githubclient.SearchResult{}, nil
+				return pkg.SearchResult{}, nil
 			}
 
 			w := newTestWatcher(ghClient, pub, cursorPath, startTime)
@@ -333,9 +331,9 @@ var _ = Describe("Watcher", func() {
 		})
 	})
 
-	Describe("Cursor file missing on first poll", func() {
+	Describe("pkg.Cursor file missing on first poll", func() {
 		It("uses startTime as since, calls SearchPRs correctly", func() {
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
+			ghClient.SearchPRsReturns(pkg.SearchResult{
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -349,9 +347,9 @@ var _ = Describe("Watcher", func() {
 		})
 	})
 
-	Describe("Cursor save fails", func() {
+	Describe("pkg.Cursor save fails", func() {
 		It("Poll returns nil (non-crash)", func() {
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
+			ghClient.SearchPRsReturns(pkg.SearchResult{
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -365,7 +363,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("GetHeadSHA caches result", func() {
 		It("calls GetHeadSHA once per unique PR", func() {
-			prs := []githubclient.PullRequest{
+			prs := []pkg.PullRequest{
 				{
 					Number:      1,
 					Owner:       "bborbe",
@@ -374,7 +372,7 @@ var _ = Describe("Watcher", func() {
 					UpdatedAt:   time.Now(),
 				},
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
+			ghClient.SearchPRsReturns(pkg.SearchResult{
 				PullRequests:  prs,
 				HasNextPage:   false,
 				RateRemaining: 100,
@@ -390,7 +388,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("buildFrontmatter fields", func() {
 		It("includes required keys", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      5,
 				Owner:       "bborbe",
 				Repo:        "repo",
@@ -398,8 +396,8 @@ var _ = Describe("Watcher", func() {
 				AuthorLogin: "alice",
 				UpdatedAt:   time.Now(),
 			}
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -422,7 +420,7 @@ var _ = Describe("Watcher", func() {
 
 	Describe("UpdateFrontmatterCommand fields", func() {
 		It("body section heading matches exact format", func() {
-			pr := githubclient.PullRequest{
+			pr := pkg.PullRequest{
 				Number:      7,
 				Owner:       "bborbe",
 				Repo:        "repo",
@@ -431,8 +429,8 @@ var _ = Describe("Watcher", func() {
 			}
 
 			// First poll: create
-			ghClient.SearchPRsReturns(githubclient.SearchResult{
-				PullRequests:  []githubclient.PullRequest{pr},
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
 				HasNextPage:   false,
 				RateRemaining: 100,
 			}, nil)
@@ -442,7 +440,7 @@ var _ = Describe("Watcher", func() {
 			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
 
 			// Second poll: force-push
-			pub2 := new(pubmocks.CommandPublisher)
+			pub2 := new(mocks.CommandPublisher)
 			ghClient.GetHeadSHAReturns("sha-v2", nil)
 			pub2.PublishUpdateFrontmatterReturns(nil)
 			w2 := newTestWatcher(ghClient, pub2, cursorPath, startTime)

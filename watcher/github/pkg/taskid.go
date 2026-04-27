@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package taskid
+package pkg
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ var prWatcherNamespace = uuid.MustParse("7d4b3e5f-8a21-4c9d-b036-2e5f7a8c1d0e")
 
 // Derive returns a deterministic task identifier for a PR.
 // Input: "<owner>/<repo>#<number>", e.g. "bborbe/code-reviewer#42".
-func Derive(owner, repo string, number int) uuid.UUID {
+func DeriveTaskID(owner, repo string, number int) uuid.UUID {
 	key := fmt.Sprintf("%s/%s#%d", owner, repo, number)
 	return uuid.NewSHA1(prWatcherNamespace, []byte(key))
 }

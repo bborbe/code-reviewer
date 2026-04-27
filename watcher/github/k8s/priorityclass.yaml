@@ -1,8 +1,0 @@
-apiVersion: scheduling.k8s.io/v1
-kind: PriorityClass
-metadata:
-  name: github-pr-watcher
-value: 500
-globalDefault: false
-preemptionPolicy: Never
-description: "github-pr-watcher poller — single-replica long-running service"

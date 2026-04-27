@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package taskid_test
+package pkg_test
 
 import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/taskid"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 var _ = Describe("TaskID", func() {
@@ -17,16 +17,16 @@ var _ = Describe("TaskID", func() {
 
 	Describe("Derive", func() {
 		It("is deterministic — same inputs always produce the same UUID", func() {
-			a := taskid.Derive("bborbe", "code-reviewer", 42)
-			b := taskid.Derive("bborbe", "code-reviewer", 42)
+			a := pkg.DeriveTaskID("bborbe", "code-reviewer", 42)
+			b := pkg.DeriveTaskID("bborbe", "code-reviewer", 42)
 			Expect(a).To(Equal(b))
 		})
 
 		It("produces different UUIDs for different owner/repo/number combos", func() {
-			a := taskid.Derive("bborbe", "code-reviewer", 42)
-			b := taskid.Derive("bborbe", "code-reviewer", 43)
-			c := taskid.Derive("bborbe", "other-repo", 42)
-			d := taskid.Derive("other-org", "code-reviewer", 42)
+			a := pkg.DeriveTaskID("bborbe", "code-reviewer", 42)
+			b := pkg.DeriveTaskID("bborbe", "code-reviewer", 43)
+			c := pkg.DeriveTaskID("bborbe", "other-repo", 42)
+			d := pkg.DeriveTaskID("other-org", "code-reviewer", 42)
 			Expect(a).NotTo(Equal(b))
 			Expect(a).NotTo(Equal(c))
 			Expect(a).NotTo(Equal(d))
@@ -34,7 +34,7 @@ var _ = Describe("TaskID", func() {
 
 		It("produces the expected pinned UUID for bborbe/code-reviewer#42", func() {
 			expected := uuid.NewSHA1(prWatcherNamespace, []byte("bborbe/code-reviewer#42"))
-			Expect(taskid.Derive("bborbe", "code-reviewer", 42)).To(Equal(expected))
+			Expect(pkg.DeriveTaskID("bborbe", "code-reviewer", 42)).To(Equal(expected))
 		})
 	})
 })

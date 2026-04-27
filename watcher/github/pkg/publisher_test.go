@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package publisher_test
+package pkg_test
 
 import (
 	"context"
@@ -15,20 +15,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/publisher"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 var _ = Describe("Publisher", func() {
 	var (
 		ctx    context.Context
 		sender *cqrsmocks.CDBCommandObjectSender
-		pub    publisher.CommandPublisher
+		pub    pkg.CommandPublisher
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
 		sender = new(cqrsmocks.CDBCommandObjectSender)
-		pub = publisher.New(sender)
+		pub = pkg.NewCommandPublisher(sender)
 	})
 
 	Describe("PublishCreate", func() {

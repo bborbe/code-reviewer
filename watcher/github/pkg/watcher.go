@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package watcher
+package pkg
 
 import (
 	"context"
@@ -12,12 +12,6 @@ import (
 	agentlib "github.com/bborbe/agent/lib"
 	"github.com/bborbe/errors"
 	"github.com/golang/glog"
-
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/cursor"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/filter"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/publisher"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/taskid"
 )
 
 //counterfeiter:generate -o mocks/watcher.go --fake-name Watcher . Watcher
@@ -29,8 +23,8 @@ type Watcher interface {
 
 // NewWatcher returns a Watcher that polls GitHub and publishes commands.
 func NewWatcher(
-	ghClient githubclient.GitHubClient,
-	pub publisher.CommandPublisher,
+	ghClient GitHubClient,
+	pub CommandPublisher,
 	cursorPath string,
 	startTime time.Time,
 	scope string,
@@ -51,8 +45,8 @@ func NewWatcher(
 }
 
 type watcher struct {
-	ghClient          githubclient.GitHubClient
-	publisher         publisher.CommandPublisher
+	ghClient          GitHubClient
+	publisher         CommandPublisher
 	cursorPath        string
 	startTime         time.Time
 	scope             string
@@ -62,7 +56,7 @@ type watcher struct {
 }
 
 func (w *watcher) Poll(ctx context.Context) error {
-	cursorState, err := cursor.Load(ctx, w.cursorPath, w.startTime)
+	cursorState, err := LoadCursor(ctx, w.cursorPath, w.startTime)
 	if err != nil {
 		glog.Errorf("failed to load cursor err=%v", err)
 		return nil
@@ -79,7 +73,7 @@ func (w *watcher) Poll(ctx context.Context) error {
 		cursorState.LastUpdatedAt = maxUpdatedAt
 	}
 
-	if err := cursor.Save(ctx, w.cursorPath, cursorState); err != nil {
+	if err := SaveCursor(ctx, w.cursorPath, cursorState); err != nil {
 		glog.Errorf("failed to save cursor err=%v", err)
 	}
 	return nil
@@ -90,9 +84,9 @@ func (w *watcher) Poll(ctx context.Context) error {
 func (w *watcher) fetchAllPRs(
 	ctx context.Context,
 	since time.Time,
-) ([]githubclient.PullRequest, bool) {
+) ([]PullRequest, bool) {
 	page := 1
-	var allPRs []githubclient.PullRequest
+	var allPRs []PullRequest
 
 	for {
 		result, err := w.ghClient.SearchPRs(ctx, w.scope, since, page)
@@ -130,20 +124,20 @@ func (w *watcher) fetchAllPRs(
 // processPRs iterates over fetched PRs, publishes commands, and returns the max updated-at seen.
 func (w *watcher) processPRs(
 	ctx context.Context,
-	cursorState cursor.State,
-	allPRs []githubclient.PullRequest,
+	cursorState Cursor,
+	allPRs []PullRequest,
 ) time.Time {
 	since := cursorState.LastUpdatedAt
 	maxUpdatedAt := since
 	headSHACache := make(map[string]string)
 
 	for _, pr := range allPRs {
-		if filter.ShouldSkip(pr, w.botAllowlist) {
+		if ShouldSkipPR(pr, w.botAllowlist) {
 			glog.V(3).Infof("skipping pr=%s/%s#%d reason=filtered", pr.Owner, pr.Repo, pr.Number)
 			continue
 		}
 
-		taskIDStr := taskid.Derive(pr.Owner, pr.Repo, pr.Number).String()
+		taskIDStr := DeriveTaskID(pr.Owner, pr.Repo, pr.Number).String()
 
 		headSHA, err := w.fetchHeadSHA(ctx, pr, taskIDStr, headSHACache)
 		if err != nil {
@@ -164,8 +158,8 @@ func (w *watcher) processPRs(
 // Returns true if the PR was processed successfully (cursor should advance).
 func (w *watcher) handlePR(
 	ctx context.Context,
-	cursorState cursor.State,
-	pr githubclient.PullRequest,
+	cursorState Cursor,
+	pr PullRequest,
 	taskIDStr, headSHA string,
 ) bool {
 	knownSHA, exists := cursorState.HeadSHAs[taskIDStr]
@@ -183,8 +177,8 @@ func (w *watcher) handlePR(
 
 func (w *watcher) publishCreate(
 	ctx context.Context,
-	cursorState cursor.State,
-	pr githubclient.PullRequest,
+	cursorState Cursor,
+	pr PullRequest,
 	taskIDStr, headSHA string,
 ) bool {
 	cmd := agentlib.CreateTaskCommand{
@@ -204,8 +198,8 @@ func (w *watcher) publishCreate(
 
 func (w *watcher) publishForcePush(
 	ctx context.Context,
-	cursorState cursor.State,
-	pr githubclient.PullRequest,
+	cursorState Cursor,
+	pr PullRequest,
 	taskIDStr, oldSHA, newSHA string,
 ) bool {
 	heading := fmt.Sprintf("## Outdated by force-push %s", oldSHA)
@@ -230,7 +224,7 @@ func (w *watcher) publishForcePush(
 
 func (w *watcher) fetchHeadSHA(
 	ctx context.Context,
-	pr githubclient.PullRequest,
+	pr PullRequest,
 	taskIDStr string,
 	cache map[string]string,
 ) (string, error) {
@@ -245,12 +239,12 @@ func (w *watcher) fetchHeadSHA(
 	return sha, nil
 }
 
-func buildTaskBody(pr githubclient.PullRequest) string {
+func buildTaskBody(pr PullRequest) string {
 	return fmt.Sprintf("# PR Review: %s\n\n%s\n", pr.Title, pr.HTMLURL)
 }
 
 func buildFrontmatter(
-	pr githubclient.PullRequest,
+	pr PullRequest,
 	taskIDStr, stage string,
 ) agentlib.TaskFrontmatter {
 	return agentlib.TaskFrontmatter{

@@ -16,10 +16,7 @@ import (
 	libkafka "github.com/bborbe/kafka"
 	"github.com/bborbe/log"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/cursor"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/publisher"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/watcher"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 const defaultRateSafeThreshold = 10
@@ -30,7 +27,7 @@ func CreateKafkaPublisher(
 	ctx context.Context,
 	brokers libkafka.Brokers,
 	branch base.Branch,
-) (publisher.CommandPublisher, func(), error) {
+) (pkg.CommandPublisher, func(), error) {
 	syncProducer, err := libkafka.NewSyncProducerWithName(ctx, brokers, "github-pr-watcher")
 	if err != nil {
 		return nil, nil, errors.Wrapf(ctx, err, "create sync producer")
@@ -41,7 +38,7 @@ func CreateKafkaPublisher(
 			_ = err
 		}
 	}
-	return publisher.New(sender), cleanup, nil
+	return pkg.NewCommandPublisher(sender), cleanup, nil
 }
 
 // CreateWatcher wires all dependencies and returns a ready-to-use Watcher.
@@ -54,18 +51,18 @@ func CreateWatcher(
 	botAllowlist []string,
 	pollInterval time.Duration,
 	startTime time.Time,
-) (watcher.Watcher, func(), error) {
+) (pkg.Watcher, func(), error) {
 	branch := base.Branch(stage)
 	pub, cleanup, err := CreateKafkaPublisher(ctx, brokers, branch)
 	if err != nil {
 		return nil, nil, errors.Wrapf(ctx, err, "create kafka publisher")
 	}
 
-	ghClient := githubclient.NewGitHubClient(ghToken)
-	w := watcher.NewWatcher(
+	ghClient := pkg.NewGitHubClient(ghToken)
+	w := pkg.NewWatcher(
 		ghClient,
 		pub,
-		cursor.DefaultCursorPath,
+		pkg.DefaultCursorPath,
 		startTime,
 		repoScope,
 		botAllowlist,

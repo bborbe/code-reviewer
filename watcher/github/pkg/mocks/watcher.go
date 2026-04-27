@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/watcher"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 type Watcher struct {
@@ -107,4 +107,4 @@ func (fake *Watcher) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ watcher.Watcher = new(Watcher)
+var _ pkg.Watcher = new(Watcher)

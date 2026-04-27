@@ -3,4 +3,4 @@
 // license that can be found in the LICENSE file.
 
 // Package publisher exports internal symbols for testing.
-package publisher
+package pkg

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 type GitHubClient struct {
@@ -26,7 +26,7 @@ type GitHubClient struct {
 		result1 string
 		result2 error
 	}
-	SearchPRsStub        func(context.Context, string, time.Time, int) (githubclient.SearchResult, error)
+	SearchPRsStub        func(context.Context, string, time.Time, int) (pkg.SearchResult, error)
 	searchPRsMutex       sync.RWMutex
 	searchPRsArgsForCall []struct {
 		arg1 context.Context
@@ -35,11 +35,11 @@ type GitHubClient struct {
 		arg4 int
 	}
 	searchPRsReturns struct {
-		result1 githubclient.SearchResult
+		result1 pkg.SearchResult
 		result2 error
 	}
 	searchPRsReturnsOnCall map[int]struct {
-		result1 githubclient.SearchResult
+		result1 pkg.SearchResult
 		result2 error
 	}
 	invocations      map[string][][]interface{}
@@ -113,7 +113,7 @@ func (fake *GitHubClient) GetHeadSHAReturnsOnCall(i int, result1 string, result2
 	}{result1, result2}
 }
 
-func (fake *GitHubClient) SearchPRs(arg1 context.Context, arg2 string, arg3 time.Time, arg4 int) (githubclient.SearchResult, error) {
+func (fake *GitHubClient) SearchPRs(arg1 context.Context, arg2 string, arg3 time.Time, arg4 int) (pkg.SearchResult, error) {
 	fake.searchPRsMutex.Lock()
 	ret, specificReturn := fake.searchPRsReturnsOnCall[len(fake.searchPRsArgsForCall)]
 	fake.searchPRsArgsForCall = append(fake.searchPRsArgsForCall, struct {
@@ -141,7 +141,7 @@ func (fake *GitHubClient) SearchPRsCallCount() int {
 	return len(fake.searchPRsArgsForCall)
 }
 
-func (fake *GitHubClient) SearchPRsCalls(stub func(context.Context, string, time.Time, int) (githubclient.SearchResult, error)) {
+func (fake *GitHubClient) SearchPRsCalls(stub func(context.Context, string, time.Time, int) (pkg.SearchResult, error)) {
 	fake.searchPRsMutex.Lock()
 	defer fake.searchPRsMutex.Unlock()
 	fake.SearchPRsStub = stub
@@ -154,28 +154,28 @@ func (fake *GitHubClient) SearchPRsArgsForCall(i int) (context.Context, string, 
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *GitHubClient) SearchPRsReturns(result1 githubclient.SearchResult, result2 error) {
+func (fake *GitHubClient) SearchPRsReturns(result1 pkg.SearchResult, result2 error) {
 	fake.searchPRsMutex.Lock()
 	defer fake.searchPRsMutex.Unlock()
 	fake.SearchPRsStub = nil
 	fake.searchPRsReturns = struct {
-		result1 githubclient.SearchResult
+		result1 pkg.SearchResult
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *GitHubClient) SearchPRsReturnsOnCall(i int, result1 githubclient.SearchResult, result2 error) {
+func (fake *GitHubClient) SearchPRsReturnsOnCall(i int, result1 pkg.SearchResult, result2 error) {
 	fake.searchPRsMutex.Lock()
 	defer fake.searchPRsMutex.Unlock()
 	fake.SearchPRsStub = nil
 	if fake.searchPRsReturnsOnCall == nil {
 		fake.searchPRsReturnsOnCall = make(map[int]struct {
-			result1 githubclient.SearchResult
+			result1 pkg.SearchResult
 			result2 error
 		})
 	}
 	fake.searchPRsReturnsOnCall[i] = struct {
-		result1 githubclient.SearchResult
+		result1 pkg.SearchResult
 		result2 error
 	}{result1, result2}
 }
@@ -202,4 +202,4 @@ func (fake *GitHubClient) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ githubclient.GitHubClient = new(GitHubClient)
+var _ pkg.GitHubClient = new(GitHubClient)

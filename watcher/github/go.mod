@@ -15,15 +15,19 @@ require (
 	github.com/bborbe/agent/lib v0.55.0
 	github.com/bborbe/cqrs v0.3.4
 	github.com/bborbe/errors v1.5.10
+	github.com/bborbe/http v1.26.9
 	github.com/bborbe/kafka v1.22.11
 	github.com/bborbe/log v1.6.11
+	github.com/bborbe/run v1.9.18
 	github.com/bborbe/sentry v1.9.15
 	github.com/bborbe/service v1.9.9
 	github.com/golang/glog v1.2.5
 	github.com/google/go-github/v62 v62.0.0
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
 	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
+	github.com/prometheus/client_golang v1.23.2
 	golang.org/x/oauth2 v0.36.0
 )
 
@@ -93,12 +97,10 @@ require (
 	github.com/bazelbuild/buildtools v0.0.0-20260319080235-05d2ebe49b0f // indirect
 	github.com/bborbe/argument/v2 v2.12.18 // indirect
 	github.com/bborbe/collection v1.20.9 // indirect
-	github.com/bborbe/http v1.26.9 // indirect
 	github.com/bborbe/k8s v1.13.5 // indirect
 	github.com/bborbe/kv v1.19.4 // indirect
 	github.com/bborbe/math v1.3.7 // indirect
 	github.com/bborbe/parse v1.10.10 // indirect
-	github.com/bborbe/run v1.9.18 // indirect
 	github.com/bborbe/strimzi v1.8.2 // indirect
 	github.com/bborbe/time v1.25.9 // indirect
 	github.com/bborbe/validation v1.4.11 // indirect
@@ -248,7 +250,6 @@ require (
 	github.com/gookit/color v1.6.0 // indirect
 	github.com/gordonklaus/ineffassign v0.2.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.5.0 // indirect
@@ -351,7 +352,6 @@ require (
 	github.com/pkg/xattr v0.4.12 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect

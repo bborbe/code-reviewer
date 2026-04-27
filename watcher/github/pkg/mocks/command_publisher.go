@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/bborbe/agent/lib"
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/publisher"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
 type CommandPublisher struct {
@@ -184,4 +184,4 @@ func (fake *CommandPublisher) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ publisher.CommandPublisher = new(CommandPublisher)
+var _ pkg.CommandPublisher = new(CommandPublisher)

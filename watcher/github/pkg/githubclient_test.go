@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package githubclient_test
+package pkg_test
 
 import (
 	"context"
@@ -17,10 +17,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/watcher/github/pkg/githubclient"
+	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
-var _ = Describe("GitHubClient", func() {
+var _ = Describe("pkg.GitHubClient", func() {
 	var (
 		ctx    context.Context
 		cancel context.CancelFunc
@@ -34,11 +34,11 @@ var _ = Describe("GitHubClient", func() {
 		cancel()
 	})
 
-	buildClient := func(server *httptest.Server) githubclient.GitHubClient {
+	buildClient := func(server *httptest.Server) pkg.GitHubClient {
 		ghc := gogithub.NewClient(server.Client())
 		baseURL, _ := url.Parse(server.URL + "/")
 		ghc.BaseURL = baseURL
-		return githubclient.NewForTest(ghc)
+		return pkg.NewForTest(ghc)
 	}
 
 	Describe("SearchPRs", func() {

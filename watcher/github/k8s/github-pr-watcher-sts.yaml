@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: github-pr-watcher
+  namespace: '{{ "NAMESPACE" | env }}'
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/match-tag: "true"
+    keel.sh/pollSchedule: "@every 1m"
+    random: '{{ "RANDOM" | env }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-pr-watcher
+  serviceName: github-pr-watcher
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9090"
+        prometheus.io/scheme: http
+        prometheus.io/scrape: "true"
+        random: '{{ "RANDOM" | env }}'
+      labels:
+        app: github-pr-watcher
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node_type
+                    operator: In
+                    values:
+                      - 'agent'
+      containers:
+        - name: service
+          args:
+            - -v={{"LOGLEVEL" | env}}
+          env:
+            - name: LISTEN
+              value: ':9090'
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pr-watcher
+                  key: GH_TOKEN
+            - name: KAFKA_BROKERS
+              value: '{{ "KAFKA_BROKERS" | env }}'
+            - name: STAGE
+              value: '{{ "STAGE" | env }}'
+            - name: SENTRY_PROXY
+              value: '{{"SENTRY_PROXY_URL" | env}}'
+          image: '{{"DOCKER_REGISTRY" | env}}/github-pr-watcher:{{"BRANCH" | env}}'
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          ports:
+            - containerPort: 9090
+              name: http
+          resources:
+            requests:
+              cpu: 20m
+              memory: 20Mi
+            limits:
+              cpu: 200m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /data
+              name: datadir
+      imagePullSecrets:
+        - name: docker
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      spec:
+        storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi

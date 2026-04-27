@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package publisher
+package pkg
 
 import (
 	"context"
@@ -24,7 +24,7 @@ type CommandPublisher interface {
 }
 
 // New returns a CommandPublisher backed by the given CommandObjectSender.
-func New(sender cdb.CommandObjectSender) CommandPublisher {
+func NewCommandPublisher(sender cdb.CommandObjectSender) CommandPublisher {
 	return &kafkaPublisher{sender: sender}
 }
 
