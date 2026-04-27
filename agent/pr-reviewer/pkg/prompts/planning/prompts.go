@@ -1,0 +1,26 @@
+// Copyright (c) 2026 Benjamin Borbe All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package planning embeds the planning-phase prompt for agent-pr-reviewer.
+package planning
+
+import (
+	_ "embed"
+
+	claudelib "github.com/bborbe/agent/lib/claude"
+)
+
+//go:embed workflow.md
+var workflow string
+
+//go:embed output-format.md
+var outputFormat string
+
+// BuildInstructions assembles the planning-phase prompt from embedded modules.
+func BuildInstructions() claudelib.Instructions {
+	return claudelib.Instructions{
+		{Name: "workflow", Content: workflow},
+		{Name: "output-format", Content: outputFormat},
+	}
+}

@@ -20,16 +20,36 @@ import (
 	libtime "github.com/bborbe/time"
 	"github.com/golang/glog"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts"
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/execution"
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/planning"
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/review"
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/steps"
 )
 
 const serviceName = "agent-pr-reviewer"
 
-// allowedTools pins the Claude tools pr-reviewer needs: read files, search,
-// invoke git/gh for PR inspection, and fetch web content.
-var allowedTools = claudelib.AllowedTools{
-	"Read", "Grep", "Glob", "Bash(git:*)", "Bash(gh:*)", "WebFetch",
-}
+// Per-phase tool scopes. Principle: each phase gets the smallest set that
+// lets it do its job. Planning + Review are read-only inspection. Execution
+// gets broader git/gh access for cross-file reads but still cannot post
+// (no `gh pr comment` / `gh pr review`) — posting happens out-of-band
+// after the human approves the verdict.
+var (
+	planningTools = claudelib.AllowedTools{
+		"Read", "Grep", "Glob",
+		"Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+		"Bash(gh pr view:*)", "Bash(gh pr diff:*)", "Bash(gh pr list:*)",
+	}
+	executionTools = claudelib.AllowedTools{
+		"Read", "Grep", "Glob",
+		"Bash(git:*)",
+		"Bash(gh pr view:*)", "Bash(gh pr diff:*)", "Bash(gh pr list:*)",
+		"WebFetch",
+	}
+	reviewTools = claudelib.AllowedTools{
+		"Read", "Grep",
+		"Bash(gh pr view:*)", "Bash(gh pr diff:*)",
+	}
+)
 
 // CreateClaudeRunner constructs a ClaudeRunner pre-configured with tools,
 // model, working directory, and CLI environment. ghToken is forwarded as
@@ -39,6 +59,7 @@ func CreateClaudeRunner(
 	agentDir claudelib.AgentDir,
 	model claudelib.ClaudeModel,
 	ghToken string,
+	allowedTools claudelib.AllowedTools,
 ) claudelib.ClaudeRunner {
 	env := map[string]string{}
 	if ghToken != "" {
@@ -95,28 +116,47 @@ func CreateFileResultDeliverer(filePath string) agentlib.ResultDeliverer {
 	)
 }
 
-// CreateAgent assembles the full 3-phase pr-reviewer agent. Single Claude
-// step shared across planning / in_progress / ai_review preserves the
-// existing CRD trigger.phases behavior — every phase runs Claude once and
-// emits done.
+// CreateAgent assembles the full 3-phase pr-reviewer agent with per-phase
+// tool scopes and per-phase prompts:
+//
+//   - planning: read-only diff inspection → ## Plan (JSON)
+//   - in_progress: read + cross-file inspection → ## Review (JSON)
+//   - ai_review: minimal read-only fresh-context verifier → ## Verdict (JSON);
+//     verdict=pass → done, otherwise → human_review
 func CreateAgent(
 	claudeConfigDir claudelib.ClaudeConfigDir,
 	agentDir claudelib.AgentDir,
 	model claudelib.ClaudeModel,
 	ghToken string,
 ) *agentlib.Agent {
-	runner := CreateClaudeRunner(claudeConfigDir, agentDir, model, ghToken)
-	step := claudelib.NewAgentStep(claudelib.AgentStepConfig{
-		Name:          "pr-review",
-		Runner:        runner,
-		Instructions:  prompts.BuildInstructions(),
-		OutputSection: "## Review",
-		NextPhase:     "done",
+	planningStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
+		Name:          "pr-plan",
+		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, ghToken, planningTools),
+		Instructions:  planning.BuildInstructions(),
+		OutputSection: "## Plan",
+		NextPhase:     "in_progress",
 	})
+	executionStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
+		Name: "pr-execute",
+		Runner: CreateClaudeRunner(
+			claudeConfigDir,
+			agentDir,
+			model,
+			ghToken,
+			executionTools,
+		),
+		Instructions:  execution.BuildInstructions(),
+		OutputSection: "## Review",
+		NextPhase:     "ai_review",
+	})
+	reviewStep := steps.NewReviewStep(
+		CreateClaudeRunner(claudeConfigDir, agentDir, model, ghToken, reviewTools),
+		review.BuildInstructions(),
+	)
 	return agentlib.NewAgent(
-		agentlib.NewPhase("planning", step),
-		agentlib.NewPhase("in_progress", step),
-		agentlib.NewPhase("ai_review", step),
+		agentlib.NewPhase("planning", planningStep),
+		agentlib.NewPhase("in_progress", executionStep),
+		agentlib.NewPhase("ai_review", reviewStep),
 	)
 }
 

@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package prompts
+// Package review embeds the ai_review-phase prompt for agent-pr-reviewer.
+package review
 
 import (
 	_ "embed"
@@ -16,8 +17,7 @@ var workflow string
 //go:embed output-format.md
 var outputFormat string
 
-// BuildInstructions assembles the full agent prompt from embedded modules.
-// Each section is wrapped in XML tags for clear separation.
+// BuildInstructions assembles the ai_review-phase prompt from embedded modules.
 func BuildInstructions() claudelib.Instructions {
 	return claudelib.Instructions{
 		{Name: "workflow", Content: workflow},
