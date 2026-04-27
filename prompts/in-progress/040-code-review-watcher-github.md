@@ -1,6 +1,7 @@
 ---
-status: draft
+status: approved
 created: "2026-04-27T22:24:13Z"
+queued: "2026-04-27T22:28:25Z"
 ---
 
 <summary>
@@ -45,6 +46,8 @@ For each Critical or Important finding (or group of related findings in the same
 
 **Filename:** `review-watcher-github-<fix-description>.md`
 
+**Pre-fill the child prompt's `<context>` section** with the actual files cited by the finding (file paths + line numbers as hints) — do NOT leave the placeholder string "list specific files with line numbers as hints" in the generated prompt
+
 Each fix prompt must follow this exact structure:
 
 ```
@@ -78,7 +81,8 @@ Include function signatures where helpful.
 - Only change files in `watcher/github/`
 - Do NOT commit — dark-factory handles git
 - Existing tests must still pass
-- Use `errors.Wrap`/`errors.Errorf` from `github.com/bborbe/errors` — never `fmt.Errorf` or bare `return err`
+- Use `errors.Wrapf(ctx, err, "...")` from `github.com/bborbe/errors` (always pass `ctx` as first arg) — never `fmt.Errorf`, never bare `return err`
+- Code changes MUST add or update tests for changed paths — paths covered before the fix must remain covered, new paths must be tested
 </constraints>
 
 <verification>
@@ -90,6 +94,7 @@ cd watcher/github && make precommit
 - One concern per prompt (e.g., "fix error wrapping in package X")
 - Group coupled findings that must change together
 - Split unrelated findings into separate prompts
+- Soft cap: ≤5 files per fix prompt — if a finding spans more files, split into multiple sequenced prompts (`1-`, `2-`, …)
 - If order matters, prefix filenames with `1-`, `2-`, `3-`
 
 ## 4. Summary
@@ -109,5 +114,5 @@ Print a summary of findings and generated prompt files.
 
 <verification>
 This prompt only generates markdown files — no code changes, no build needed.
-ls prompts/review-watcher-github-*.md
+ls prompts/review-watcher-github-*.md 2>/dev/null || echo "no findings — clean bill of health"
 </verification>
