@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	agentlib "github.com/bborbe/agent/lib"
 	claudelib "github.com/bborbe/agent/lib/claude"
@@ -77,12 +78,12 @@ func (s *reviewStep) Run(ctx context.Context, md *agentlib.Markdown) (*agentlib.
 		Body:    runResult.Result,
 	})
 
-	var verdict verdictPayload
-	if err := json.Unmarshal([]byte(runResult.Result), &verdict); err != nil {
+	verdict, err := extractVerdict(runResult.Result)
+	if err != nil {
 		return &agentlib.Result{
 			Status:    agentlib.AgentStatusDone,
 			NextPhase: "human_review",
-			Message:   fmt.Sprintf("ai-review wrote ## Verdict but JSON unparseable: %v", err),
+			Message:   fmt.Sprintf("ai-review wrote ## Verdict but verdict unparseable: %v", err),
 		}, nil
 	}
 
@@ -99,4 +100,61 @@ func (s *reviewStep) Run(ctx context.Context, md *agentlib.Markdown) (*agentlib.
 		NextPhase: "human_review",
 		Message:   fmt.Sprintf("ai-review verdict=%s: %s", verdict.Verdict, verdict.Reason),
 	}, nil
+}
+
+// extractVerdict parses the verdict from the LLM's response. The prompt
+// asks for raw JSON only, but Claude sometimes prefixes the JSON with
+// prose explanation. To be tolerant, we (1) try direct unmarshal of the
+// trimmed response, then (2) strip ```json fences if present, then
+// (3) extract the last balanced {...} block from the response.
+func extractVerdict(raw string) (verdictPayload, error) {
+	trimmed := strings.TrimSpace(raw)
+
+	// 1. Direct attempt.
+	var v verdictPayload
+	if err := json.Unmarshal([]byte(trimmed), &v); err == nil {
+		return v, nil
+	}
+
+	// 2. Strip code fences.
+	stripped := strings.TrimSpace(strings.TrimSuffix(
+		strings.TrimPrefix(strings.TrimPrefix(trimmed, "```json"), "```"),
+		"```",
+	))
+	if err := json.Unmarshal([]byte(stripped), &v); err == nil {
+		return v, nil
+	}
+
+	// 3. Extract last balanced {...} block.
+	block, ok := lastJSONBlock(trimmed)
+	if !ok {
+		return verdictPayload{}, fmt.Errorf("no JSON object found in response")
+	}
+	if err := json.Unmarshal([]byte(block), &v); err != nil {
+		return verdictPayload{}, fmt.Errorf("extract last JSON block: %w", err)
+	}
+	return v, nil
+}
+
+// lastJSONBlock returns the last balanced {...} substring in s, or
+// "", false if none exists. Walks from the end finding the closing
+// brace, then walks back tracking brace depth to find the matching open.
+func lastJSONBlock(s string) (string, bool) {
+	end := strings.LastIndex(s, "}")
+	if end < 0 {
+		return "", false
+	}
+	depth := 0
+	for i := end; i >= 0; i-- {
+		switch s[i] {
+		case '}':
+			depth++
+		case '{':
+			depth--
+			if depth == 0 {
+				return s[i : end+1], true
+			}
+		}
+	}
+	return "", false
 }
