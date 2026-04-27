@@ -1,5 +1,5 @@
 ---
-status: committing
+status: completed
 spec: ["009"]
 summary: Implemented cursor persistence, CommandPublisher, full poll cycle with force-push detection and rate-limit backoff, and wired main.go tick loop for github-pr-watcher
 container: code-reviewer-037-spec-009-poll-loop
@@ -7,6 +7,7 @@ dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-27T20:45:00Z"
 queued: "2026-04-27T21:02:13Z"
 started: "2026-04-27T21:16:36Z"
+completed: "2026-04-27T21:32:38Z"
 ---
 
 <summary>
