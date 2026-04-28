@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Added ctx context.Context to prurl.Parse and internal helpers, replaced all fmt.Errorf calls with errors.Errorf(ctx, ...) from github.com/bborbe/errors, and updated all callers.
+container: code-reviewer-048-review-agent-pr-reviewer-error-wrapping-prurl
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
 queued: "2026-04-28T14:52:29Z"
+started: "2026-04-28T15:04:28Z"
 ---
 
 <summary>

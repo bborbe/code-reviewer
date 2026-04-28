@@ -5,6 +5,8 @@
 package prurl_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -19,7 +21,7 @@ var _ = Describe("Parse", func() {
 	)
 
 	JustBeforeEach(func() {
-		info, err = prurl.Parse(rawURL)
+		info, err = prurl.Parse(context.Background(), rawURL)
 	})
 
 	Context("GitHub URLs", func() {

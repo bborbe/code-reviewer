@@ -65,7 +65,7 @@ func run(ctx context.Context, verbose bool, commentOnly bool) error {
 
 	// Parse PR URL
 	logVerbose(verbose, "parsing URL: %s", rawURL)
-	prInfo, err := prurl.Parse(rawURL)
+	prInfo, err := prurl.Parse(ctx, rawURL)
 	if err != nil {
 		return err
 	}

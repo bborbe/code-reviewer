@@ -5,10 +5,13 @@
 package prurl
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/bborbe/errors"
 )
 
 // Platform represents the type of PR platform.
@@ -38,42 +41,42 @@ type PRInfo struct {
 //   - Bitbucket Server: https://{host}/projects/{project}/repos/{repo}/pull-requests/{number}[/overview]
 //
 // Returns error for unrecognized URL patterns or non-HTTPS URLs.
-func Parse(rawURL string) (*PRInfo, error) {
+func Parse(ctx context.Context, rawURL string) (*PRInfo, error) {
 	if rawURL == "" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	if u.Scheme != "https" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	// Detect platform by host
 	if u.Host == "github.com" {
-		return parseGitHub(rawURL, u)
+		return parseGitHub(ctx, rawURL, u)
 	}
 
 	// Try Bitbucket Server pattern (any non-github.com host with /projects/ path)
 	if strings.Contains(u.Path, "/projects/") {
-		return parseBitbucket(rawURL, u)
+		return parseBitbucket(ctx, rawURL, u)
 	}
 
-	return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+	return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 }
 
 // parseGitHub parses a GitHub PR URL.
 // Expected format: https://github.com/{owner}/{repo}/pull/{number}
-func parseGitHub(rawURL string, u *url.URL) (*PRInfo, error) {
+func parseGitHub(ctx context.Context, rawURL string, u *url.URL) (*PRInfo, error) {
 	// Parse path: /{owner}/{repo}/pull/{number}
 	path := strings.TrimSuffix(u.Path, "/")
 	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	if len(parts) != 4 {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	owner := parts[0]
@@ -82,16 +85,16 @@ func parseGitHub(rawURL string, u *url.URL) (*PRInfo, error) {
 	numberStr := parts[3]
 
 	if owner == "" || repo == "" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	if pullKeyword != "pull" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	number, err := strconv.Atoi(numberStr)
 	if err != nil {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	repoURL := fmt.Sprintf("https://github.com/%s/%s", owner, repo)
@@ -109,7 +112,7 @@ func parseGitHub(rawURL string, u *url.URL) (*PRInfo, error) {
 
 // parseBitbucket parses a Bitbucket Server PR URL.
 // Expected format: https://{host}/projects/{project}/repos/{repo}/pull-requests/{number}[/overview]
-func parseBitbucket(rawURL string, u *url.URL) (*PRInfo, error) {
+func parseBitbucket(ctx context.Context, rawURL string, u *url.URL) (*PRInfo, error) {
 	// Parse path: /projects/{project}/repos/{repo}/pull-requests/{number}[/overview]
 	path := strings.TrimSuffix(u.Path, "/")
 	path = strings.TrimSuffix(path, "/overview") // Remove optional /overview suffix
@@ -117,34 +120,34 @@ func parseBitbucket(rawURL string, u *url.URL) (*PRInfo, error) {
 
 	// Expected: [projects, {project}, repos, {repo}, pull-requests, {number}]
 	if len(parts) != 6 {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	if parts[0] != "projects" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	project := parts[1]
 
 	if parts[2] != "repos" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	repo := parts[3]
 
 	if parts[4] != "pull-requests" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	numberStr := parts[5]
 
 	if project == "" || repo == "" {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	number, err := strconv.Atoi(numberStr)
 	if err != nil {
-		return nil, fmt.Errorf("unsupported URL format: %s", rawURL)
+		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}
 
 	repoURL := fmt.Sprintf("https://%s/projects/%s/repos/%s", u.Host, project, repo)

@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.14
+
+- refactor: add `ctx context.Context` to `prurl.Parse` and internal helpers, replace all `fmt.Errorf` with `errors.Errorf(ctx, ...)` for context-tagged stack trace errors
+
 ## v0.16.13
 
 - refactor: replace `errors.Wrapf` with `errors.Wrap` where format string has no `%` verbs in watcher/github/pkg and watcher/github/pkg/factory
