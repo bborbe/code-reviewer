@@ -1,7 +1,13 @@
 ---
-status: approved
+status: committing
+summary: Hardened Bitbucket HTTP client with 30s timeout, HTTPS upgrade for non-loopback hosts, and migrated all error construction to github.com/bborbe/errors with proper context propagation
+container: code-reviewer-053-review-agent-pr-reviewer-security-and-error-wrapping-bitbucket-client
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
 queued: "2026-04-28T15:19:27Z"
+started: "2026-04-28T16:21:53Z"
+completed: "2026-04-28T15:59:01Z"
+lastFailReason: 'execute prompt: docker run failed: wait command: exit status 125'
 ---
 
 <summary>

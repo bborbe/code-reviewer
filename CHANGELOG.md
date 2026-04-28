@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.19
+
+- fix: add 30s timeout to Bitbucket HTTP client to prevent slow-server goroutine exhaustion
+- fix: upgrade non-loopback `http://` hosts to `https://` in `buildURL` to prevent cleartext credential transmission
+- refactor: replace all `fmt.Errorf` calls in `agent/pr-reviewer/pkg/bitbucket/client.go` with `errors.Errorf`/`errors.Wrapf` from `github.com/bborbe/errors`
+
 ## v0.16.18
 
 - fix: validate branch names before `git checkout` in `CreateClone` to prevent argument injection via hyphen-prefixed or traversal branch names
