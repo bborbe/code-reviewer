@@ -19,8 +19,6 @@ import (
 	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 )
 
-const defaultRateSafeThreshold = 10
-
 // CreateKafkaPublisher constructs a CommandPublisher backed by a Kafka sync producer.
 // The cleanup function closes the underlying sync producer on shutdown.
 func CreateKafkaPublisher(
@@ -67,7 +65,6 @@ func CreateWatcher(
 		repoScope,
 		botAllowlist,
 		stage,
-		defaultRateSafeThreshold,
 	)
 	return w, cleanup, nil
 }

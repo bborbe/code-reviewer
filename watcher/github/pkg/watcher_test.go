@@ -33,7 +33,6 @@ func newTestWatcher(
 		"bborbe",
 		[]string{"dependabot[bot]"},
 		"dev",
-		10,
 	)
 }
 
@@ -275,34 +274,6 @@ var _ = Describe("pkg.Watcher", func() {
 			w2 := newTestWatcher(ghClient, pub2, cursorPath, startTime)
 			Expect(w2.Poll(ctx)).NotTo(HaveOccurred())
 			Expect(pub2.PublishCreateCallCount()).To(Equal(1))
-		})
-	})
-
-	Describe("Rate limit low", func() {
-		It("Poll aborts early, no publishes", func() {
-			// Use RateResetAt in the past so time.After fires immediately (~5s)
-			// We pass a pre-cancelled context to avoid the 5s sleep in tests.
-			cancelledCtx, cancelFn := context.WithCancel(context.Background())
-			cancelFn() // already cancelled
-
-			pr := pkg.PullRequest{
-				Number:      1,
-				Owner:       "bborbe",
-				Repo:        "repo",
-				AuthorLogin: "alice",
-				UpdatedAt:   time.Now(),
-			}
-			ghClient.SearchPRsReturns(pkg.SearchResult{
-				PullRequests:  []pkg.PullRequest{pr},
-				HasNextPage:   false,
-				RateRemaining: 5,                                // below threshold of 10
-				RateResetAt:   time.Now().Add(-1 * time.Second), // already past
-			}, nil)
-
-			w := newTestWatcher(ghClient, pub, cursorPath, startTime)
-			err := w.Poll(cancelledCtx)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(pub.PublishCreateCallCount()).To(Equal(0))
 		})
 	})
 

@@ -17,9 +17,16 @@ verify-gh-token:
 	@echo "teamvault-key: $(PR_REVIEWER_GITHUB_TOKEN_KEY)"
 	@echo "token-prefix:  $(shell echo $(TOKEN) | head -c 12)..."
 	@user=$$(curl -sH "Authorization: token $(TOKEN)" https://api.github.com/user | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('login','<none>'))"); \
-	limit=$$(curl -sH "Authorization: token $(TOKEN)" https://api.github.com/rate_limit | python3 -c "import json,sys; print(json.load(sys.stdin)['resources']['core']['limit'])"); \
+	rl_json=$$(curl -sH "Authorization: token $(TOKEN)" https://api.github.com/rate_limit); \
+	limit=$$(echo "$$rl_json" | python3 -c "import json,sys; print(json.load(sys.stdin)['resources']['core']['limit'])"); \
 	echo "user:          $$user"; \
 	echo "rate-limit:    $$limit/hr"; \
+	echo "usage (used/limit, reset in):"; \
+	echo "$$rl_json" | python3 -c "import json,sys,time; \
+r=json.load(sys.stdin)['resources']; \
+keys=['core','search','graphql','code_search']; \
+now=int(time.time()); \
+[print(f\"  {k:<12} {r[k]['limit']-r[k]['remaining']:>5}/{r[k]['limit']:<5}  reset in {max(0,r[k]['reset']-now)//60:>2}m{max(0,r[k]['reset']-now)%60:02d}s\") for k in keys if k in r]"; \
 	if [ "$$limit" = "5000" ]; then \
 		echo "PASS: token authenticates as PAT"; \
 	elif [ "$$limit" = "60" ]; then \

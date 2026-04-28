@@ -8,6 +8,11 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.6
+
+- fix(watcher/github): drop runtime rate-limit pre-check (`rateSafeThreshold`) — the threshold (10) was set assuming REST API (5000/hr) but applied to Search API (10/min), causing every poll cycle to abort after the first call. Tokens are for use; broken-token validity is checked separately by `make verify-gh-token`. On 403 the search call returns an error, the cycle aborts, next 5-min tick retries.
+- feat(agent/pr-reviewer): `make verify-gh-token` now prints per-bucket usage (core/search/graphql/code_search) with reset countdown — exposes that Search API is 10/min not 5000/hr (root cause of the watcher bug above).
+
 ## v0.16.5
 
 - feat(watcher/github): add admin `/trigger` HTTP endpoint — fires an out-of-band poll cycle on demand via `libhttp.NewBackgroundRunHandler` (async, ParallelSkipper-deduped). Refactors poll logic into a shared `pollOnce run.Func` reused by cron loop + handler.

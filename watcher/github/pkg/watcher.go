@@ -30,29 +30,26 @@ func NewWatcher(
 	scope string,
 	botAllowlist []string,
 	stage string,
-	rateSafeThreshold int,
 ) Watcher {
 	return &watcher{
-		ghClient:          ghClient,
-		publisher:         pub,
-		cursorPath:        cursorPath,
-		startTime:         startTime,
-		scope:             scope,
-		botAllowlist:      botAllowlist,
-		stage:             stage,
-		rateSafeThreshold: rateSafeThreshold,
+		ghClient:     ghClient,
+		publisher:    pub,
+		cursorPath:   cursorPath,
+		startTime:    startTime,
+		scope:        scope,
+		botAllowlist: botAllowlist,
+		stage:        stage,
 	}
 }
 
 type watcher struct {
-	ghClient          GitHubClient
-	publisher         CommandPublisher
-	cursorPath        string
-	startTime         time.Time
-	scope             string
-	botAllowlist      []string
-	stage             string
-	rateSafeThreshold int
+	ghClient     GitHubClient
+	publisher    CommandPublisher
+	cursorPath   string
+	startTime    time.Time
+	scope        string
+	botAllowlist []string
+	stage        string
 }
 
 func (w *watcher) Poll(ctx context.Context) error {
@@ -92,16 +89,6 @@ func (w *watcher) fetchAllPRs(
 		result, err := w.ghClient.SearchPRs(ctx, w.scope, since, page)
 		if err != nil {
 			glog.Errorf("github search failed err=%v", err)
-			return nil, false
-		}
-
-		if result.RateRemaining < w.rateSafeThreshold {
-			glog.Warningf("github rate limit low remaining=%d reset=%s — aborting poll cycle",
-				result.RateRemaining, result.RateResetAt.Format(time.RFC3339))
-			select {
-			case <-ctx.Done():
-			case <-time.After(time.Until(result.RateResetAt) + 5*time.Second):
-			}
 			return nil, false
 		}
 
