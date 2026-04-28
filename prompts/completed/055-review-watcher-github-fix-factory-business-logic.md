@@ -1,11 +1,12 @@
 ---
-status: committing
+status: completed
 summary: Moved ParseBotAllowlist to pkg/filter.go, fixed syncProducer.Close() error logging, removed unused pollInterval parameter from CreateWatcher, and added ParseBotAllowlist tests in filter_test.go.
 container: code-reviewer-055-review-watcher-github-fix-factory-business-logic
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:24:46Z"
 started: "2026-04-28T18:00:55Z"
+completed: "2026-04-28T18:05:32Z"
 ---
 
 <summary>
