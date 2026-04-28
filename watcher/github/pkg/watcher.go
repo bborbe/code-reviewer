@@ -55,8 +55,7 @@ type watcher struct {
 func (w *watcher) Poll(ctx context.Context) error {
 	cursorState, err := LoadCursor(ctx, w.cursorPath, w.startTime)
 	if err != nil {
-		glog.Errorf("failed to load cursor err=%v", err)
-		return nil
+		return errors.Wrapf(ctx, err, "load cursor")
 	}
 
 	allPRs, ok := w.fetchAllPRs(ctx, cursorState.LastUpdatedAt)
@@ -64,7 +63,7 @@ func (w *watcher) Poll(ctx context.Context) error {
 		return nil
 	}
 
-	maxUpdatedAt := w.processPRs(ctx, cursorState, allPRs)
+	maxUpdatedAt := w.processPRs(ctx, &cursorState, allPRs)
 
 	if maxUpdatedAt.After(cursorState.LastUpdatedAt) {
 		cursorState.LastUpdatedAt = maxUpdatedAt
@@ -111,7 +110,7 @@ func (w *watcher) fetchAllPRs(
 // processPRs iterates over fetched PRs, publishes commands, and returns the max updated-at seen.
 func (w *watcher) processPRs(
 	ctx context.Context,
-	cursorState Cursor,
+	cursorState *Cursor,
 	allPRs []PullRequest,
 ) libtime.DateTime {
 	since := cursorState.LastUpdatedAt
@@ -145,7 +144,7 @@ func (w *watcher) processPRs(
 // Returns true if the PR was processed successfully (cursor should advance).
 func (w *watcher) handlePR(
 	ctx context.Context,
-	cursorState Cursor,
+	cursorState *Cursor,
 	pr PullRequest,
 	taskIDStr, headSHA string,
 ) bool {
@@ -164,7 +163,7 @@ func (w *watcher) handlePR(
 
 func (w *watcher) publishCreate(
 	ctx context.Context,
-	cursorState Cursor,
+	cursorState *Cursor,
 	pr PullRequest,
 	taskIDStr, headSHA string,
 ) bool {
@@ -185,7 +184,7 @@ func (w *watcher) publishCreate(
 
 func (w *watcher) publishForcePush(
 	ctx context.Context,
-	cursorState Cursor,
+	cursorState *Cursor,
 	pr PullRequest,
 	taskIDStr, oldSHA, newSHA string,
 ) bool {

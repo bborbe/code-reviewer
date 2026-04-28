@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Fixed Poll to propagate LoadCursor error via errors.Wrapf instead of swallowing it, and changed processPRs/handlePR/publishCreate/publishForcePush to accept *Cursor so HeadSHAs mutation is explicit in function signatures; added permission-denial test for LoadCursor error path.
+container: code-reviewer-057-review-watcher-github-fix-poll-error-contract
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:24:46Z"
+started: "2026-04-28T18:07:50Z"
 ---
 
 <summary>

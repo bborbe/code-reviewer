@@ -319,6 +319,21 @@ var _ = Describe("pkg.Watcher", func() {
 		})
 	})
 
+	Describe("LoadCursor error (unreadable cursor file)", func() {
+		It("Poll returns a non-nil error", func() {
+			if os.Getuid() == 0 {
+				Skip("running as root, skipping permission test")
+			}
+			Expect(os.WriteFile(cursorPath, []byte("{}"), 0600)).To(Succeed())
+			Expect(os.Chmod(cursorPath, 0000)).To(Succeed())
+			defer func() { _ = os.Chmod(cursorPath, 0600) }()
+
+			w := newTestWatcher(ghClient, pub, cursorPath, startTime)
+			err := w.Poll(ctx)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
 	Describe("pkg.Cursor save fails", func() {
 		It("Poll returns nil (non-crash)", func() {
 			ghClient.SearchPRsReturns(pkg.SearchResult{
