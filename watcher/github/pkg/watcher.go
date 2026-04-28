@@ -108,6 +108,7 @@ func (w *watcher) fetchAllPRs(
 }
 
 // processPRs iterates over fetched PRs, publishes commands, and returns the max updated-at seen.
+// It rebuilds HeadSHAs from only the current open-PR batch, pruning closed/merged PRs.
 func (w *watcher) processPRs(
 	ctx context.Context,
 	cursorState *Cursor,
@@ -116,27 +117,37 @@ func (w *watcher) processPRs(
 	since := cursorState.LastUpdatedAt
 	maxUpdatedAt := since
 	headSHACache := make(map[string]string)
+	newHeadSHAs := make(map[string]string, len(allPRs))
 
 	for _, pr := range allPRs {
+		taskIDStr := DeriveTaskID(pr.Owner, pr.Repo, pr.Number).String()
+
 		if ShouldSkipPR(pr, w.botAllowlist) {
 			glog.V(3).Infof("skipping pr=%s/%s#%d reason=filtered", pr.Owner, pr.Repo, pr.Number)
+			if known, ok := cursorState.HeadSHAs[taskIDStr]; ok {
+				newHeadSHAs[taskIDStr] = known
+			}
 			continue
 		}
-
-		taskIDStr := DeriveTaskID(pr.Owner, pr.Repo, pr.Number).String()
 
 		headSHA, err := w.fetchHeadSHA(ctx, pr, taskIDStr, headSHACache)
 		if err != nil {
 			glog.Errorf("get head sha failed pr=%s/%s#%d err=%v", pr.Owner, pr.Repo, pr.Number, err)
+			if known, ok := cursorState.HeadSHAs[taskIDStr]; ok {
+				newHeadSHAs[taskIDStr] = known
+			}
 			continue
 		}
 
 		if w.handlePR(ctx, cursorState, pr, taskIDStr, headSHA) {
+			newHeadSHAs[taskIDStr] = headSHA
 			if pr.UpdatedAt.After(maxUpdatedAt) {
 				maxUpdatedAt = pr.UpdatedAt
 			}
 		}
 	}
+
+	cursorState.HeadSHAs = newHeadSHAs
 	return maxUpdatedAt
 }
 

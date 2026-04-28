@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.24
+
+- fix: rebuild `HeadSHAs` from current open-PR batch each poll cycle to prevent unbounded growth from closed/merged PRs
+
 ## v0.16.23
 
 - fix: propagate `LoadCursor` error from `Poll` instead of swallowing it, pass `*Cursor` to `processPRs`/`handlePR`/`publishCreate`/`publishForcePush` to make HeadSHAs mutation explicit in function signatures

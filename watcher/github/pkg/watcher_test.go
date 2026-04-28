@@ -334,6 +334,59 @@ var _ = Describe("pkg.Watcher", func() {
 		})
 	})
 
+	Describe("Closed PR pruned from cursor after poll", func() {
+		It("removes closed PR's task ID from HeadSHAs after second poll", func() {
+			prA := pkg.PullRequest{
+				Number:      42,
+				Owner:       "bborbe",
+				Repo:        "code-reviewer",
+				Title:       "pr A",
+				AuthorLogin: "alice",
+				UpdatedAt:   libtime.DateTime(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)),
+			}
+			prB := pkg.PullRequest{
+				Number:      43,
+				Owner:       "bborbe",
+				Repo:        "code-reviewer",
+				Title:       "pr B",
+				AuthorLogin: "alice",
+				UpdatedAt:   libtime.DateTime(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)),
+			}
+
+			// First poll: both PRs open
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{prA, prB},
+				HasNextPage:   false,
+				RateRemaining: 100,
+			}, nil)
+			ghClient.GetHeadSHAReturns("sha-initial", nil)
+			pub.PublishCreateReturns(nil)
+
+			w := newTestWatcher(ghClient, pub, cursorPath, startTime)
+			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
+			Expect(pub.PublishCreateCallCount()).To(Equal(2))
+
+			// Second poll: only PR A returned (PR B closed/merged)
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{prA},
+				HasNextPage:   false,
+				RateRemaining: 100,
+			}, nil)
+			pub2 := new(mocks.CommandPublisher)
+			pub2.PublishCreateReturns(nil)
+			w2 := newTestWatcher(ghClient, pub2, cursorPath, startTime)
+			Expect(w2.Poll(ctx)).NotTo(HaveOccurred())
+
+			cursor, err := pkg.LoadCursor(ctx, cursorPath, startTime)
+			Expect(err).NotTo(HaveOccurred())
+
+			taskIDA := pkg.DeriveTaskID(prA.Owner, prA.Repo, prA.Number).String()
+			taskIDB := pkg.DeriveTaskID(prB.Owner, prB.Repo, prB.Number).String()
+			Expect(cursor.HeadSHAs).To(HaveKey(taskIDA))
+			Expect(cursor.HeadSHAs).NotTo(HaveKey(taskIDB))
+		})
+	})
+
 	Describe("pkg.Cursor save fails", func() {
 		It("Poll returns nil (non-crash)", func() {
 			ghClient.SearchPRsReturns(pkg.SearchResult{
