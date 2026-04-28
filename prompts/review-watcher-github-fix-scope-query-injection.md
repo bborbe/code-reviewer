@@ -26,36 +26,30 @@ Files to read before making changes (read ALL first):
 </context>
 
 <requirements>
-1. Add a `validateRepoScope` helper in `watcher/github/main.go`:
+1. Add a `validateRepoScope` helper in `watcher/github/main.go`. The `github.com/bborbe/errors` API requires `ctx` for both `New` and `Errorf` — thread it through:
 
    ```go
    var repoScopePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 
-   func validateRepoScope(scope string) error {
+   func validateRepoScope(ctx context.Context, scope string) error {
        if !repoScopePattern.MatchString(scope) {
-           return errors.New("repo scope must match ^[a-zA-Z0-9_.-]+$")
+           return errors.Errorf(ctx, "repo scope %q must match ^[a-zA-Z0-9_.-]+$", scope)
        }
        return nil
    }
    ```
 
-   Note: `errors.New` here is from `github.com/bborbe/errors` without a context (construction-time validation, no ctx available). Alternatively use `fmt.Errorf` only if `bborbe/errors` does not have a no-context `New`. Grep-verify:
-   ```bash
-   grep -rn "func New\b" $(go env GOPATH)/pkg/mod/github.com/bborbe/errors@*/... 2>/dev/null | head -5
-   ```
-   If no no-context `New` exists, use `errors.Wrapf(ctx, nil, "invalid repo scope %q: must match ...", scope)` with the ctx from `Run`.
-
 2. Call `validateRepoScope` at the start of `application.Run` in `watcher/github/main.go`, before `factory.CreateWatcher`:
 
    ```go
-   if err := validateRepoScope(a.RepoScope); err != nil {
-       return errors.Wrapf(ctx, err, "invalid repo scope %q", a.RepoScope)
+   if err := validateRepoScope(ctx, a.RepoScope); err != nil {
+       return err
    }
    ```
 
-3. Add `"regexp"` to the imports in `main.go`.
+3. Add `"regexp"` to the imports in `main.go`. Ensure the import alias for the bborbe errors lib is `"github.com/bborbe/errors"` (not stdlib `errors`).
 
-4. Add a unit test for `validateRepoScope` in `watcher/github/main_test.go`:
+4. Add a Ginkgo/Gomega test for `validateRepoScope` in `watcher/github/main_test.go` (matching the existing test style there) using `DescribeTable` / `Entry`:
    - Valid inputs: `"bborbe"`, `"my-org"`, `"org.name"`, `"org_name"`, `"Org123"`
    - Invalid inputs: `"user is:issue"` (space), `"user;drop"` (semicolon), `""` (empty), `"user+more"` (plus)
 

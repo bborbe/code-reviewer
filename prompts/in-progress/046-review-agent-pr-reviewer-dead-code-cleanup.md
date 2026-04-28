@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Deleted deprecated pkg/github/url.go and url_test.go, removed FindRepoPath method from pkg/config/config.go and its test block from config_test.go; make precommit passed with exit code 0.
+container: code-reviewer-046-review-agent-pr-reviewer-dead-code-cleanup
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
 queued: "2026-04-28T14:51:25Z"
+started: "2026-04-28T14:59:38Z"
 ---
 
 <summary>

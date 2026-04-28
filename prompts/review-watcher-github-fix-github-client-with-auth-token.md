@@ -23,7 +23,7 @@ Read `CLAUDE.md` for project conventions.
 
 Files to read before making changes (read ALL first):
 - `watcher/github/pkg/githubclient.go` (~lines 56-63): `NewGitHubClient` constructor using `oauth2.StaticTokenSource` + `oauth2.NewClient(context.Background(), ts)`
-- `watcher/github/pkg/factory/factory.go` (~line 61): `pkg.NewGitHubClient(ghToken)` call site
+- `watcher/github/pkg/factory/factory.go` (~line 59): `pkg.NewGitHubClient(ghToken)` call site (verified, signature unchanged)
 - `watcher/github/pkg/githubclient_test.go`: verify no tests directly exercise the constructor (they use the mock)
 - `watcher/github/pkg/githubclient_export_test.go`: check if any internals are exported for test
 </context>

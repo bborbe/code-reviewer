@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.12
+
+- refactor: remove deprecated `ParsePRURL`/`PRInfo` from `pkg/github` and dead `FindRepoPath` method from `pkg/config`
+
 ## v0.16.11
 
 - docs: add watcher/github/README.md documenting env vars, cursor mechanism, and relationship to pr-reviewer; update root README Layout section

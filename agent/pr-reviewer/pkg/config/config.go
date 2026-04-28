@@ -186,19 +186,6 @@ func validateConfig(cfg *Config) error {
 	return nil
 }
 
-// FindRepoPath looks up the local path for a given repository URL.
-func (c *Config) FindRepoPath(repoURL string) (string, error) {
-	normalizedURL := normalizeURL(repoURL)
-
-	for _, repo := range c.Repos {
-		if normalizeURL(repo.URL) == normalizedURL {
-			return repo.Path, nil
-		}
-	}
-
-	return "", fmt.Errorf("repo not found in config, add to ~/.code-reviewer.yaml: %s", repoURL)
-}
-
 // FindRepo looks up the repository information including path and review command.
 // Returns RepoInfo with path and reviewCommand. If reviewCommand is not specified,
 // it remains empty and main.go will construct "/pr-review <target-branch>" dynamically.
