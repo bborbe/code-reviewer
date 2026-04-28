@@ -18,6 +18,7 @@ import (
 	"github.com/bborbe/errors"
 	libkafka "github.com/bborbe/kafka"
 	libtime "github.com/bborbe/time"
+	"github.com/bborbe/vault-cli/pkg/domain"
 	"github.com/golang/glog"
 
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/execution"
@@ -27,6 +28,16 @@ import (
 )
 
 const serviceName = "agent-pr-reviewer"
+
+// AgentRunner is the minimal interface satisfied by *agentlib.Agent.
+type AgentRunner interface {
+	Run(
+		ctx context.Context,
+		phaseName domain.TaskPhase,
+		taskContent string,
+		deliverer agentlib.ResultDeliverer,
+	) (*agentlib.Result, error)
+}
 
 // Per-phase tool scopes. Principle: each phase gets the smallest set that
 // lets it do its job. Planning + Review are read-only inspection. Execution
@@ -52,19 +63,15 @@ var (
 )
 
 // CreateClaudeRunner constructs a ClaudeRunner pre-configured with tools,
-// model, working directory, and CLI environment. ghToken is forwarded as
-// GH_TOKEN into the Claude CLI subprocess env so the gh CLI can authenticate.
+// model, working directory, and CLI environment. env is forwarded as-is
+// into the Claude CLI subprocess env (caller builds it, e.g. with GH_TOKEN).
 func CreateClaudeRunner(
 	claudeConfigDir claudelib.ClaudeConfigDir,
 	agentDir claudelib.AgentDir,
 	model claudelib.ClaudeModel,
-	ghToken string,
+	env map[string]string,
 	allowedTools claudelib.AllowedTools,
 ) claudelib.ClaudeRunner {
-	env := map[string]string{}
-	if ghToken != "" {
-		env["GH_TOKEN"] = ghToken
-	}
 	return claudelib.NewClaudeRunner(claudelib.ClaudeRunnerConfig{
 		ClaudeConfigDir:  claudeConfigDir,
 		AllowedTools:     allowedTools,
@@ -128,30 +135,25 @@ func CreateAgent(
 	agentDir claudelib.AgentDir,
 	model claudelib.ClaudeModel,
 	ghToken string,
-) *agentlib.Agent {
+	env map[string]string,
+) AgentRunner {
 	tokenCheck := steps.NewGHTokenCheckStep(ghToken)
 	planningStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
 		Name:          "pr-plan",
-		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, ghToken, planningTools),
+		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, env, planningTools),
 		Instructions:  planning.BuildInstructions(),
 		OutputSection: "## Plan",
 		NextPhase:     "in_progress",
 	})
 	executionStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
-		Name: "pr-execute",
-		Runner: CreateClaudeRunner(
-			claudeConfigDir,
-			agentDir,
-			model,
-			ghToken,
-			executionTools,
-		),
+		Name:          "pr-execute",
+		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, env, executionTools),
 		Instructions:  execution.BuildInstructions(),
 		OutputSection: "## Review",
 		NextPhase:     "ai_review",
 	})
 	reviewStep := steps.NewReviewStep(
-		CreateClaudeRunner(claudeConfigDir, agentDir, model, ghToken, reviewTools),
+		CreateClaudeRunner(claudeConfigDir, agentDir, model, env, reviewTools),
 		review.BuildInstructions(),
 	)
 	return agentlib.NewAgent(
@@ -161,25 +163,17 @@ func CreateAgent(
 	)
 }
 
-// CreateDeliverer builds the Kafka-or-Noop deliverer used by the Kafka
-// entry point. Empty taskID means "no Kafka" — returns a noop deliverer
-// and an empty cleanup. Non-empty taskID requires non-empty brokers; the
-// returned cleanup closes the underlying SyncProducer (logged-and-ignored
-// on error).
+// CreateDeliverer builds the Kafka result deliverer used by the Kafka
+// entry point. Requires non-empty taskID and brokers — callers must
+// guard these preconditions before calling.
 func CreateDeliverer(
 	ctx context.Context,
 	taskID agentlib.TaskIdentifier,
 	brokers libkafka.Brokers,
 	branch base.Branch,
 	originalContent string,
+	currentDateTime libtime.CurrentDateTimeGetter,
 ) (agentlib.ResultDeliverer, func(), error) {
-	if taskID == "" {
-		glog.V(2).Infof("TASK_ID not set, skipping task result publishing")
-		return delivery.NewNoopResultDeliverer(), func() {}, nil
-	}
-	if len(brokers) == 0 {
-		return nil, nil, errors.Errorf(ctx, "KAFKA_BROKERS must be set when TASK_ID is set")
-	}
 	syncProducer, err := CreateSyncProducer(ctx, brokers)
 	if err != nil {
 		return nil, nil, errors.Wrap(ctx, err, "create sync producer failed")
@@ -189,7 +183,7 @@ func CreateDeliverer(
 		branch,
 		taskID,
 		originalContent,
-		libtime.NewCurrentDateTime(),
+		currentDateTime,
 	)
 	cleanup := func() {
 		if err := syncProducer.Close(); err != nil {

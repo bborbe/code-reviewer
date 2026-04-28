@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Extracted routing logic from factory into main.go, changed CreateClaudeRunner to accept env map, added AgentRunner interface return from CreateAgent, and injected libtime.CurrentDateTimeGetter from callers — factory is now pure composition.
+container: code-reviewer-059-review-agent-pr-reviewer-factory-pattern-fixes
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
 queued: "2026-04-28T15:24:46Z"
+started: "2026-04-28T18:12:44Z"
 ---
 
 <summary>

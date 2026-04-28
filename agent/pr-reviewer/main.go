@@ -14,11 +14,13 @@ import (
 
 	agentlib "github.com/bborbe/agent/lib"
 	claudelib "github.com/bborbe/agent/lib/claude"
+	delivery "github.com/bborbe/agent/lib/delivery"
 	"github.com/bborbe/cqrs/base"
 	"github.com/bborbe/errors"
 	libkafka "github.com/bborbe/kafka"
 	libsentry "github.com/bborbe/sentry"
 	"github.com/bborbe/service"
+	libtime "github.com/bborbe/time"
 	"github.com/bborbe/vault-cli/pkg/domain"
 	"github.com/golang/glog"
 
@@ -70,17 +72,34 @@ func (a *application) Run(ctx context.Context, _ libsentry.Client) error {
 		return errors.Wrap(ctx, err, "ensure plugins installed")
 	}
 
-	deliverer, cleanup, err := factory.CreateDeliverer(
-		ctx, a.TaskID, a.KafkaBrokers, a.Branch, a.TaskContent,
-	)
-	if err != nil {
-		return errors.Wrap(ctx, err, "create deliverer")
+	var resultDeliverer agentlib.ResultDeliverer
+	var cleanup func()
+
+	if a.TaskID == "" {
+		glog.V(2).Infof("TASK_ID not set, skipping task result publishing")
+		resultDeliverer = delivery.NewNoopResultDeliverer()
+		cleanup = func() {}
+	} else {
+		if len(a.KafkaBrokers) == 0 {
+			return errors.Errorf(ctx, "KAFKA_BROKERS must be set when TASK_ID is set")
+		}
+		currentDateTime := libtime.NewCurrentDateTime()
+		var err error
+		resultDeliverer, cleanup, err = factory.CreateDeliverer(ctx, a.TaskID, a.KafkaBrokers, a.Branch, a.TaskContent, currentDateTime)
+		if err != nil {
+			return errors.Wrap(ctx, err, "create deliverer")
+		}
 	}
 	defer cleanup()
 
-	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken)
+	env := map[string]string{}
+	if a.GHToken != "" {
+		env["GH_TOKEN"] = a.GHToken
+	}
 
-	result, err := agent.Run(ctx, a.Phase, a.TaskContent, deliverer)
+	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken, env)
+
+	result, err := agent.Run(ctx, a.Phase, a.TaskContent, resultDeliverer)
 	if err != nil {
 		return errors.Wrap(ctx, err, "agent run failed")
 	}

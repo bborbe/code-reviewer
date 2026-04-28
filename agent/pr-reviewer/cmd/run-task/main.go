@@ -65,7 +65,12 @@ func (a *application) Run(ctx context.Context, _ libsentry.Client) error {
 
 	deliverer := factory.CreateFileResultDeliverer(a.TaskFilePath)
 
-	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken)
+	env := map[string]string{}
+	if a.GHToken != "" {
+		env["GH_TOKEN"] = a.GHToken
+	}
+
+	agent := factory.CreateAgent(a.ClaudeConfigDir, a.AgentDir, a.Model, a.GHToken, env)
 
 	result, err := agent.Run(ctx, a.Phase, string(taskContent), deliverer)
 	if err != nil {

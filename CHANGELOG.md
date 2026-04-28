@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.25
+
+- refactor: extract routing logic from `factory.CreateClaudeRunner` and `factory.CreateDeliverer` into `main.go`; return `AgentRunner` interface from `CreateAgent`; inject `libtime.CurrentDateTimeGetter` from caller
+
 ## v0.16.24
 
 - fix: rebuild `HeadSHAs` from current open-PR batch each poll cycle to prevent unbounded growth from closed/merged PRs
