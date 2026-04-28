@@ -35,11 +35,11 @@ type kafkaPublisher struct {
 func (p *kafkaPublisher) PublishCreate(ctx context.Context, cmd agentlib.CreateTaskCommand) error {
 	event, err := marshalEvent(ctx, cmd)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "marshal create-task command")
+		return errors.Wrap(ctx, err, "marshal create-task command")
 	}
 	commandObject := buildCommandObject(agentlib.CreateTaskCommandOperation, event)
 	if err := p.sender.SendCommandObject(ctx, commandObject); err != nil {
-		return errors.Wrapf(ctx, err, "publish create-task")
+		return errors.Wrap(ctx, err, "publish create-task")
 	}
 	return nil
 }
@@ -50,11 +50,11 @@ func (p *kafkaPublisher) PublishUpdateFrontmatter(
 ) error {
 	event, err := marshalEvent(ctx, cmd)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "marshal update-frontmatter command")
+		return errors.Wrap(ctx, err, "marshal update-frontmatter command")
 	}
 	commandObject := buildCommandObject(agentlib.UpdateFrontmatterCommandOperation, event)
 	if err := p.sender.SendCommandObject(ctx, commandObject); err != nil {
-		return errors.Wrapf(ctx, err, "publish update-frontmatter")
+		return errors.Wrap(ctx, err, "publish update-frontmatter")
 	}
 	return nil
 }
@@ -62,11 +62,11 @@ func (p *kafkaPublisher) PublishUpdateFrontmatter(
 func marshalEvent(ctx context.Context, v interface{}) (base.Event, error) {
 	data, err := json.Marshal(v)
 	if err != nil {
-		return nil, errors.Wrapf(ctx, err, "marshal command to json")
+		return nil, errors.Wrap(ctx, err, "marshal command to json")
 	}
 	event, err := base.ParseEvent(ctx, data)
 	if err != nil {
-		return nil, errors.Wrapf(ctx, err, "parse event from json")
+		return nil, errors.Wrap(ctx, err, "parse event from json")
 	}
 	return event, nil
 }

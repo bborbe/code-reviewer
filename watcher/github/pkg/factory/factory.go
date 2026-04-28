@@ -28,7 +28,7 @@ func CreateKafkaPublisher(
 ) (pkg.CommandPublisher, func(), error) {
 	syncProducer, err := libkafka.NewSyncProducerWithName(ctx, brokers, "github-pr-watcher")
 	if err != nil {
-		return nil, nil, errors.Wrapf(ctx, err, "create sync producer")
+		return nil, nil, errors.Wrap(ctx, err, "create sync producer")
 	}
 	sender := cdb.NewCommandObjectSender(syncProducer, branch, log.DefaultSamplerFactory)
 	cleanup := func() {
@@ -53,7 +53,7 @@ func CreateWatcher(
 	branch := base.Branch(stage)
 	pub, cleanup, err := CreateKafkaPublisher(ctx, brokers, branch)
 	if err != nil {
-		return nil, nil, errors.Wrapf(ctx, err, "create kafka publisher")
+		return nil, nil, errors.Wrap(ctx, err, "create kafka publisher")
 	}
 
 	ghClient := pkg.NewGitHubClient(ghToken)
