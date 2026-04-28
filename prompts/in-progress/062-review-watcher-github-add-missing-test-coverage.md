@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Added three new Ginkgo test cases to watcher/github/pkg/watcher_test.go covering publishForcePush Kafka failure, fetchHeadSHA error path, and fetchHeadSHA cache hit with duplicate task ID; all target functions now at 100% coverage and make precommit exits 0.
+container: code-reviewer-062-review-watcher-github-add-missing-test-coverage
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:36:26Z"
+started: "2026-04-28T18:26:26Z"
 ---
 
 <summary>

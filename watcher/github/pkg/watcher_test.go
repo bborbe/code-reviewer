@@ -400,6 +400,100 @@ var _ = Describe("pkg.Watcher", func() {
 		})
 	})
 
+	Describe("publishForcePush Kafka publish error", func() {
+		It("does not update cursor SHA to new SHA, Poll returns nil", func() {
+			pr := pkg.PullRequest{
+				Number:      55,
+				Owner:       "bborbe",
+				Repo:        "repo",
+				AuthorLogin: "alice",
+				UpdatedAt:   libtime.DateTime(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)),
+			}
+
+			// First poll: register initial SHA via create
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
+				HasNextPage:   false,
+				RateRemaining: 100,
+			}, nil)
+			ghClient.GetHeadSHAReturns("sha-v1", nil)
+			pub.PublishCreateReturns(nil)
+
+			w := newTestWatcher(ghClient, pub, cursorPath, startTime, fakeMetrics)
+			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
+			Expect(pub.PublishCreateCallCount()).To(Equal(1))
+
+			// Second poll: force-push detected, but Kafka publish fails
+			ghClient.GetHeadSHAReturns("sha-v2", nil)
+			pub2 := new(mocks.CommandPublisher)
+			pub2.PublishUpdateFrontmatterReturns(errors.New("kafka unavailable"))
+			w2 := newTestWatcher(ghClient, pub2, cursorPath, startTime, fakeMetrics)
+			Expect(w2.Poll(ctx)).NotTo(HaveOccurred())
+			Expect(pub2.PublishUpdateFrontmatterCallCount()).To(Equal(1))
+
+			// Cursor SHA must NOT be updated to sha-v2 (the new SHA) after a failed publish
+			cursor, err := pkg.LoadCursor(ctx, cursorPath, startTime)
+			Expect(err).NotTo(HaveOccurred())
+			taskIDStr := pkg.DeriveTaskID(pr.Owner, pr.Repo, pr.Number).String()
+			Expect(cursor.HeadSHAs[taskIDStr]).NotTo(Equal("sha-v2"))
+		})
+	})
+
+	Describe("fetchHeadSHA returns an error", func() {
+		It("Poll returns nil, PublishCreate never called", func() {
+			pr := pkg.PullRequest{
+				Number:      77,
+				Owner:       "bborbe",
+				Repo:        "repo",
+				AuthorLogin: "alice",
+				UpdatedAt:   libtime.DateTime(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)),
+			}
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr},
+				HasNextPage:   false,
+				RateRemaining: 100,
+			}, nil)
+			ghClient.GetHeadSHAReturns("", errors.New("github api error"))
+
+			w := newTestWatcher(ghClient, pub, cursorPath, startTime, fakeMetrics)
+			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
+			Expect(pub.PublishCreateCallCount()).To(Equal(0))
+
+			// Cursor LastUpdatedAt should not advance past startTime
+			cursor, err := pkg.LoadCursor(ctx, cursorPath, startTime)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cursor.LastUpdatedAt).To(Equal(startTime))
+		})
+	})
+
+	Describe("fetchHeadSHA cache hit with duplicate task ID", func() {
+		It("calls GetHeadSHA once and PublishCreate once for same PR twice in results", func() {
+			pr1 := pkg.PullRequest{
+				Number:      10,
+				Owner:       "bborbe",
+				Repo:        "repo",
+				AuthorLogin: "alice",
+				UpdatedAt:   libtime.DateTime(time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)),
+			}
+			// Identical Owner/Repo/Number → same task ID
+			pr2 := pr1
+
+			ghClient.SearchPRsReturns(pkg.SearchResult{
+				PullRequests:  []pkg.PullRequest{pr1, pr2},
+				HasNextPage:   false,
+				RateRemaining: 100,
+			}, nil)
+			ghClient.GetHeadSHAReturns("sha-dedup", nil)
+			pub.PublishCreateReturns(nil)
+
+			w := newTestWatcher(ghClient, pub, cursorPath, startTime, fakeMetrics)
+			Expect(w.Poll(ctx)).NotTo(HaveOccurred())
+
+			Expect(ghClient.GetHeadSHACallCount()).To(Equal(1))
+			Expect(pub.PublishCreateCallCount()).To(Equal(1))
+		})
+	})
+
 	Describe("pkg.Cursor save fails", func() {
 		It("Poll returns nil (non-crash)", func() {
 			ghClient.SearchPRsReturns(pkg.SearchResult{
