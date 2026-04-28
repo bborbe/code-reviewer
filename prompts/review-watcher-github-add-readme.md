@@ -6,13 +6,13 @@ created: "2026-04-28T00:00:00Z"
 <summary>
 - watcher/github is a fully shipped service with no README.md
 - Developers have no documentation of required env vars, how to run locally, or how it connects to pr-reviewer
-- The root README.md still lists watcher/github as "(future)" even though it is shipped
+- The root README.md does not mention watcher/github at all in its Layout section
 - A README for watcher/github should document purpose, env vars, deployment, and the cursor mechanism
-- The root README Layout section needs to be updated to reflect the shipped status
+- The root README Layout section needs a new entry for the shipped service
 </summary>
 
 <objective>
-Create `watcher/github/README.md` documenting the service purpose, all environment variables, local development commands, cursor mechanism, and relationship to the pr-reviewer agent. Update the root `README.md` to reflect that `watcher/github` is shipped, not future.
+Create `watcher/github/README.md` documenting the service purpose, all environment variables, local development commands, cursor mechanism, and relationship to the pr-reviewer agent. Add an entry for `watcher/github/` to the root `README.md` Layout section.
 </objective>
 
 <context>
@@ -49,6 +49,7 @@ Files to read before making changes (read ALL first):
    | `BOT_ALLOWLIST` | no | `dependabot[bot],renovate[bot]` | Comma-separated bot author logins to skip |
    | `LISTEN` | no | `:9090` | HTTP listen address for healthz/metrics |
    | `SENTRY_DSN` | no | — | Sentry DSN for error tracking |
+   | `SENTRY_PROXY` | no | — | Optional HTTP proxy URL for Sentry transport |
 
    **Development commands:**
    ```bash
@@ -69,15 +70,16 @@ Files to read before making changes (read ALL first):
    BSD 2-Clause License. See [LICENSE](../../LICENSE).
    ```
 
-2. **Update `README.md`** at repo root:
-   - Find the line containing `(future) watcher/github/` in the Layout tree section
-   - Replace with a proper entry showing the service is shipped:
+2. **Update root `README.md`** Layout section (the fenced code block under `## Layout`):
+   - The current tree starts with `code-reviewer/` and lists only `agent/pr-reviewer/`
+   - Add a sibling entry for `watcher/github/` after the `agent/pr-reviewer/` block, e.g.:
      ```
-     watcher/github/               # GitHub PR watcher — polls Search API, publishes CreateTaskCommand to Kafka
+     ├── watcher/github/            GitHub PR watcher service (own go.mod)
+     │   └── pkg/                   poll loop, GitHub client, cursor, Kafka publisher
      ```
-   - If the Mode/services table near the top also omits watcher/github, add a row for it
+   - Optionally also add a row to the Mode/services table at the top documenting the watcher Job
 
-3. Run `cd watcher/github && make precommit` — must exit 0 (addlicense will add the license header to README.md if needed — READMEs do not need license headers, but verify the precommit does not fail on the new file).
+3. Run `cd watcher/github && make precommit` — must exit 0 (READMEs do not need license headers; verify the precommit does not fail on the new file).
 </requirements>
 
 <constraints>
@@ -93,8 +95,10 @@ ls watcher/github/README.md
 # Expected: file exists
 
 grep -n "watcher/github" README.md
-# Expected: at least one line with watcher/github that does NOT say "(future)"
+# Expected: at least one line referencing watcher/github in Layout section
 
-grep -n "GH_TOKEN\|KAFKA_BROKERS\|REPO_SCOPE" watcher/github/README.md
+grep -n "GH_TOKEN\|KAFKA_BROKERS\|REPO_SCOPE\|SENTRY_PROXY" watcher/github/README.md
 # Expected: matches in env var table
+
+cd watcher/github && make precommit
 </verification>

@@ -1,18 +1,23 @@
 ---
-status: draft
+status: committing
+summary: Updated five Ginkgo suite files in agent/pr-reviewer to use four-argument RunSpecs with GinkgoConfiguration() and 60-second timeout, matching the established pattern in main_test.go.
+container: code-reviewer-041-review-agent-pr-reviewer-1-ginkgo-suite-setup
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
+queued: "2026-04-28T14:32:41Z"
+started: "2026-04-28T14:34:20Z"
 ---
 
 <summary>
 - Five test suite files use the two-argument `RunSpecs(t, "name")` form, which silently ignores Ginkgo configuration flags including timeout
 - Without passing `GinkgoConfiguration()` to `RunSpecs`, tests can hang indefinitely when a subprocess or network call stalls
-- The project already has the correct four-argument pattern in three other suite files — this prompt brings the first five packages into alignment
+- The project already has the correct four-argument pattern in `main_test.go` and `cmd/run-task/main_test.go` — this prompt brings the five package suite files into alignment
 - Each file needs `GinkgoConfiguration()`, a 60-second suite timeout, and the four-argument `RunSpecs` call
-- The `//go:generate` directive for counterfeiter is also missing from some of these files and should be added for consistency
+- All five files already have the `//go:generate` directive for counterfeiter; do not duplicate it
 </summary>
 
 <objective>
-Update five Ginkgo suite files to use `GinkgoConfiguration()` with a 60-second timeout and the four-argument `RunSpecs` form, matching the pattern already established in `main_test.go`, `cmd/run-task/main_test.go`, and `pkg/plugins/plugins_suite_test.go`. After this fix all test suites respect Ginkgo's timeout and reporter configuration flags.
+Update five Ginkgo suite files to use `GinkgoConfiguration()` with a 60-second timeout and the four-argument `RunSpecs` form, matching the pattern already established in `agent/pr-reviewer/main_test.go` and `agent/pr-reviewer/cmd/run-task/main_test.go`. After this fix all test suites respect Ginkgo's timeout and reporter configuration flags.
 </objective>
 
 <context>
@@ -53,15 +58,17 @@ func TestSuite(t *testing.T) {
 }
 ```
 
-1. **`pkg/config/config_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged. Add `//go:generate` directive if missing.
+All five files already have the `//go:generate` directive — do NOT add a duplicate.
 
-2. **`pkg/verdict/verdict_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged. Add `//go:generate` directive if missing.
+1. **`pkg/config/config_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged.
 
-3. **`pkg/prurl/prurl_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged. Add `//go:generate` directive if missing.
+2. **`pkg/verdict/verdict_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged.
 
-4. **`pkg/github/github_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged. Add `//go:generate` directive if missing.
+3. **`pkg/prurl/prurl_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged.
 
-5. **`pkg/review/review_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged. Add `//go:generate` directive if missing.
+4. **`pkg/github/github_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged.
+
+5. **`pkg/review/review_suite_test.go`** — Apply the transformation. Keep the existing suite name string unchanged.
 
 6. **Verify imports** in each file: `"time"` must be imported (for `60 * time.Second`). The `GinkgoConfiguration` function is from `github.com/onsi/ginkgo/v2` — it is already imported via the dot import (`. "github.com/onsi/ginkgo/v2"`). No new import needed for `GinkgoConfiguration` itself.
 

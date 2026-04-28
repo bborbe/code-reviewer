@@ -18,7 +18,6 @@ Fix six GoDoc comments that do not start with the declared item name, and create
 
 <context>
 Read `CLAUDE.md` for project conventions.
-Read `~/.claude/plugins/marketplaces/coding/docs/go-doc-best-practices.md` for GoDoc comment format rules.
 
 Files to read before making changes (read ALL first):
 - `watcher/github/pkg/cursor.go` (~lines 20, 26, 49): `Cursor` struct comment says "State holds...", `LoadCursor` comment says "Load reads...", `SaveCursor` comment says "Save persists..."
@@ -66,7 +65,7 @@ Files to read before making changes (read ALL first):
 </constraints>
 
 <verification>
-cd watcher/github && grep -n "^// State holds\|^// Load reads\|^// Save persists\|^// ShouldSkip returns\|^// New returns\|^// Derive returns" pkg/cursor.go pkg/filter.go pkg/publisher.go pkg/taskid.go
+cd watcher/github && grep -nE "^// (State holds|Load reads|Save persists|ShouldSkip returns|New returns|Derive returns)" pkg/cursor.go pkg/filter.go pkg/publisher.go pkg/taskid.go
 # Expected: no matches (all fixed)
 
 cd watcher/github && head -5 pkg/doc.go
