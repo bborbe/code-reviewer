@@ -36,7 +36,7 @@ func CreateKafkaPublisher(
 			glog.Warningf("close kafka sync producer: %v", err)
 		}
 	}
-	return pkg.NewCommandPublisher(sender), cleanup, nil
+	return pkg.NewCommandPublisher(ctx, sender), cleanup, nil
 }
 
 // CreateWatcher wires all dependencies and returns a ready-to-use Watcher.

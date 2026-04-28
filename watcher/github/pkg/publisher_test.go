@@ -28,7 +28,7 @@ var _ = Describe("Publisher", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		sender = new(cqrsmocks.CDBCommandObjectSender)
-		pub = pkg.NewCommandPublisher(sender)
+		pub = pkg.NewCommandPublisher(ctx, sender)
 	})
 
 	Describe("PublishCreate", func() {

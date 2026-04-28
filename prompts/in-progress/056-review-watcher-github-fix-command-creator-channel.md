@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Replaced per-call make(chan base.RequestID, 1) + base.NewCommandCreator pattern in buildCommandObject with a long-lived commandCreator field on kafkaPublisher, initialized once via base.RequestIDChannel(ctx) in NewCommandPublisher.
+container: code-reviewer-056-review-watcher-github-fix-command-creator-channel
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:24:46Z"
+started: "2026-04-28T18:05:33Z"
 ---
 
 <summary>

@@ -24,12 +24,16 @@ type CommandPublisher interface {
 }
 
 // NewCommandPublisher returns a CommandPublisher backed by the given CommandObjectSender.
-func NewCommandPublisher(sender cdb.CommandObjectSender) CommandPublisher {
-	return &kafkaPublisher{sender: sender}
+func NewCommandPublisher(ctx context.Context, sender cdb.CommandObjectSender) CommandPublisher {
+	return &kafkaPublisher{
+		sender:         sender,
+		commandCreator: base.NewCommandCreator(base.RequestIDChannel(ctx)),
+	}
 }
 
 type kafkaPublisher struct {
-	sender cdb.CommandObjectSender
+	sender         cdb.CommandObjectSender
+	commandCreator base.CommandCreator
 }
 
 func (p *kafkaPublisher) PublishCreate(ctx context.Context, cmd agentlib.CreateTaskCommand) error {
@@ -37,7 +41,7 @@ func (p *kafkaPublisher) PublishCreate(ctx context.Context, cmd agentlib.CreateT
 	if err != nil {
 		return errors.Wrap(ctx, err, "marshal create-task command")
 	}
-	commandObject := buildCommandObject(agentlib.CreateTaskCommandOperation, event)
+	commandObject := p.buildCommandObject(agentlib.CreateTaskCommandOperation, event)
 	if err := p.sender.SendCommandObject(ctx, commandObject); err != nil {
 		return errors.Wrap(ctx, err, "publish create-task")
 	}
@@ -52,7 +56,7 @@ func (p *kafkaPublisher) PublishUpdateFrontmatter(
 	if err != nil {
 		return errors.Wrap(ctx, err, "marshal update-frontmatter command")
 	}
-	commandObject := buildCommandObject(agentlib.UpdateFrontmatterCommandOperation, event)
+	commandObject := p.buildCommandObject(agentlib.UpdateFrontmatterCommandOperation, event)
 	if err := p.sender.SendCommandObject(ctx, commandObject); err != nil {
 		return errors.Wrap(ctx, err, "publish update-frontmatter")
 	}
@@ -71,12 +75,12 @@ func marshalEvent(ctx context.Context, v interface{}) (base.Event, error) {
 	return event, nil
 }
 
-func buildCommandObject(op base.CommandOperation, event base.Event) cdb.CommandObject {
-	requestIDCh := make(chan base.RequestID, 1)
-	requestIDCh <- base.NewRequestID()
-	commandCreator := base.NewCommandCreator(requestIDCh)
+func (p *kafkaPublisher) buildCommandObject(
+	op base.CommandOperation,
+	event base.Event,
+) cdb.CommandObject {
 	return cdb.CommandObject{
-		Command: commandCreator.NewCommand(
+		Command: p.commandCreator.NewCommand(
 			op,
 			cqrsiam.Initiator("github-pr-watcher"),
 			"",

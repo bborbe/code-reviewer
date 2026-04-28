@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.22
+
+- refactor: replace per-call `make(chan base.RequestID, 1)` + `base.NewCommandCreator` in `buildCommandObject` with a long-lived `commandCreator` field on `kafkaPublisher`, initialized once via `base.RequestIDChannel(ctx)` in `NewCommandPublisher`
+
 ## v0.16.21
 
 - refactor: move `ParseBotAllowlist` from `watcher/github/pkg/factory` to `watcher/github/pkg`, log `syncProducer.Close()` error instead of discarding it, remove unused `pollInterval` parameter from `CreateWatcher`
