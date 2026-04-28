@@ -1,11 +1,12 @@
 ---
-status: committing
+status: completed
 summary: Rebuilt HeadSHAs from current open-PR batch in processPRs to prune closed/merged PRs, preserving SHAs for filtered and fetch-error PRs, with a new test verifying stale entries are removed after a poll cycle.
 container: code-reviewer-058-review-watcher-github-fix-headshas-pruning
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:24:46Z"
 started: "2026-04-28T18:10:13Z"
+completed: "2026-04-28T18:12:42Z"
 ---
 
 <summary>
