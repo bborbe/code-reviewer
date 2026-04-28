@@ -1,11 +1,12 @@
 ---
-status: committing
+status: completed
 summary: Replaced six errors.Wrapf calls in pkg/publisher.go and two in pkg/factory/factory.go with errors.Wrap where format strings contain no % verbs.
 container: code-reviewer-047-review-watcher-github-fix-errors-wrap-without-format-verbs
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T14:52:29Z"
 started: "2026-04-28T15:02:04Z"
+completed: "2026-04-28T15:04:25Z"
 ---
 
 <summary>
