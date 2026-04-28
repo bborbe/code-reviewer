@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Added Ginkgo/Gomega tests for reviewStep.Name, ShouldRun, and Run in pkg/steps with a generated ClaudeRunnerMock counterfeiter mock, achieving 93.3% statement coverage.
+container: code-reviewer-063-review-agent-pr-reviewer-review-step-test-coverage
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T12:00:00Z"
 queued: "2026-04-28T15:36:26Z"
+started: "2026-04-28T18:29:55Z"
 ---
 
 <summary>

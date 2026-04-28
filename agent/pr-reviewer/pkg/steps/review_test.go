@@ -5,9 +5,15 @@
 package steps_test
 
 import (
+	"context"
+	"fmt"
+
+	agentlib "github.com/bborbe/agent/lib"
+	claudelib "github.com/bborbe/agent/lib/claude"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/mocks"
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/steps"
 )
 
@@ -69,4 +75,113 @@ var _ = Describe("ExtractVerdict", func() {
 		Entry("malformed JSON with unbalanced braces fails",
 			"oops {{{", "", "", false),
 	)
+})
+
+var _ = Describe("reviewStep", func() {
+	var (
+		ctx          context.Context
+		runner       *mocks.ClaudeRunnerMock
+		step         agentlib.Step
+		instructions claudelib.Instructions
+	)
+
+	BeforeEach(func() {
+		ctx = context.Background()
+		runner = &mocks.ClaudeRunnerMock{}
+		instructions = claudelib.Instructions{}
+		step = steps.NewReviewStep(runner, instructions)
+	})
+
+	Describe("Name", func() {
+		It("returns the step name", func() {
+			Expect(step.Name()).To(Equal("pr-ai-review"))
+		})
+	})
+
+	Describe("ShouldRun", func() {
+		DescribeTable("decides based on existing ## Verdict section",
+			func(content string, expected bool) {
+				md, err := agentlib.ParseMarkdown(ctx, content)
+				Expect(err).NotTo(HaveOccurred())
+				result, err := step.ShouldRun(ctx, md)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).To(Equal(expected))
+			},
+			Entry("no verdict section", "# PR Review\n\nsome text", true),
+			Entry("verdict section present", "# PR Review\n\n## Verdict\n\npass", false),
+			Entry("empty content", "", true),
+		)
+	})
+
+	Describe("Run", func() {
+		var md *agentlib.Markdown
+
+		BeforeEach(func() {
+			var err error
+			md, err = agentlib.ParseMarkdown(ctx, "# Task\n\nsome content")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("when Claude runner returns an error", func() {
+			BeforeEach(func() {
+				runner.RunReturns(nil, fmt.Errorf("claude CLI failed"))
+			})
+
+			It("returns AgentStatusFailed result without propagating the error", func() {
+				result, err := step.Run(ctx, md)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).NotTo(BeNil())
+				Expect(result.Status).To(Equal(agentlib.AgentStatusFailed))
+			})
+		})
+
+		Context("when Claude runner returns unparseable output", func() {
+			BeforeEach(func() {
+				runner.RunReturns(&claudelib.ClaudeResult{Result: "this is not json at all"}, nil)
+			})
+
+			It("returns AgentStatusDone with NextPhase human_review", func() {
+				result, err := step.Run(ctx, md)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).NotTo(BeNil())
+				Expect(result.Status).To(Equal(agentlib.AgentStatusDone))
+				Expect(result.NextPhase).To(Equal("human_review"))
+			})
+		})
+
+		Context("when Claude runner returns verdict: pass", func() {
+			BeforeEach(func() {
+				runner.RunReturns(
+					&claudelib.ClaudeResult{Result: `{"verdict":"pass","reason":"looks good"}`},
+					nil,
+				)
+			})
+
+			It("returns AgentStatusDone with NextPhase done", func() {
+				result, err := step.Run(ctx, md)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).NotTo(BeNil())
+				Expect(result.Status).To(Equal(agentlib.AgentStatusDone))
+				Expect(result.NextPhase).To(Equal("done"))
+				Expect(result.Message).To(Equal("looks good"))
+			})
+		})
+
+		Context("when Claude runner returns verdict: fail", func() {
+			BeforeEach(func() {
+				runner.RunReturns(
+					&claudelib.ClaudeResult{Result: `{"verdict":"fail","reason":"issues found"}`},
+					nil,
+				)
+			})
+
+			It("returns AgentStatusDone with NextPhase human_review", func() {
+				result, err := step.Run(ctx, md)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).NotTo(BeNil())
+				Expect(result.Status).To(Equal(agentlib.AgentStatusDone))
+				Expect(result.NextPhase).To(Equal("human_review"))
+			})
+		})
+	})
 })
