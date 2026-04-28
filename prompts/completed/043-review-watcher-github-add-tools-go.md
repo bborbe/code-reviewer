@@ -1,11 +1,12 @@
 ---
-status: committing
+status: completed
 summary: Created watcher/github/tools.go with //go:build tools tag and blank imports for all CLI tool dependencies, then ran go mod tidy and make precommit successfully.
 container: code-reviewer-043-review-watcher-github-add-tools-go
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T14:51:25Z"
 started: "2026-04-28T14:51:26Z"
+completed: "2026-04-28T14:54:20Z"
 ---
 
 <summary>
