@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/bborbe/errors"
@@ -25,6 +26,15 @@ import (
 	"github.com/bborbe/code-reviewer/watcher/github/pkg"
 	"github.com/bborbe/code-reviewer/watcher/github/pkg/factory"
 )
+
+var repoScopePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
+
+func validateRepoScope(ctx context.Context, scope string) error {
+	if !repoScopePattern.MatchString(scope) {
+		return errors.Errorf(ctx, "repo scope %q must match ^[a-zA-Z0-9_.-]+$", scope)
+	}
+	return nil
+}
 
 func main() {
 	app := &application{}
@@ -45,6 +55,10 @@ type application struct {
 }
 
 func (a *application) Run(ctx context.Context, _ libsentry.Client) error {
+	if err := validateRepoScope(ctx, a.RepoScope); err != nil {
+		return err
+	}
+
 	pollInterval, err := time.ParseDuration(a.PollInterval)
 	if err != nil {
 		return errors.Wrapf(ctx, err, "parse poll interval %q", a.PollInterval)

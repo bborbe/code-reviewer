@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.16
+
+- fix: validate `REPO_SCOPE` env var against `^[a-zA-Z0-9_.-]+$` at startup in `watcher/github` to prevent query injection via malformed scope values
+
 ## v0.16.15
 
 - refactor: migrate `fmt.Errorf` to `errors.Wrapf/Errorf(ctx, ...)` in `pkg/review`, `pkg/github/client.go`, `pkg/config/config.go`, and `pkg/steps/review.go`; replace `log.Printf` warning with `glog.Warningf`; thread `ctx` through `validateConfig`, `FindRepo`, `extractVerdict`, and `lastJSONBlock`
