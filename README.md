@@ -104,6 +104,8 @@ code-reviewer/
 │   ├── k8s/                    Config CRD, Secret, PVC, PriorityClass, ResourceQuota, Makefile
 │   ├── Dockerfile              multi-stage build (Go + claude-code + gh + git)
 │   └── agent/.claude/CLAUDE.md headless-review guardrails
+├── watcher/github/             GitHub PR watcher service (own go.mod)
+│   └── pkg/                    poll loop, GitHub client, cursor, Kafka publisher
 ├── Makefile.*                  shared includes (variables, env, docker, k8s, folder, precommit)
 ├── common.env / dev.env / prod.env
 └── prompts/ specs/             dark-factory pipeline metadata
