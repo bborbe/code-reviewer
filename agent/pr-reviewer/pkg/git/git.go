@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/bborbe/errors"
@@ -59,6 +60,10 @@ func (m *worktreeManager) CreateClone(
 	branch string,
 	prNumber int,
 ) (string, error) {
+	if !isValidBranchName(branch) {
+		return "", errors.Errorf(ctx, "invalid branch name: %s", branch)
+	}
+
 	if err := m.validateRepoPath(ctx, repoPath); err != nil {
 		return "", errors.Wrap(ctx, err, "validate repo path failed")
 	}
@@ -79,21 +84,21 @@ func (m *worktreeManager) CreateClone(
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("git clone: %s", strings.TrimSpace(stderr.String()))
+		return "", errors.Errorf(ctx, "git clone: %s", strings.TrimSpace(stderr.String()))
 	}
 
 	// Checkout the branch (detached HEAD)
 	remoteBranch := "origin/" + branch
-	// #nosec G204 -- clonePath is constructed safely, branch is validated by git itself
+	// #nosec G204 -- clonePath is constructed safely, branch is validated by isValidBranchName
 	checkoutCmd := exec.CommandContext(ctx, "git", "-C", clonePath, "checkout", remoteBranch)
 	checkoutCmd.Stderr = &stderr
 
 	if err := checkoutCmd.Run(); err != nil {
 		if strings.Contains(stderr.String(), "invalid reference") ||
 			strings.Contains(stderr.String(), "pathspec") {
-			return "", fmt.Errorf("branch not found: %s", branch)
+			return "", errors.Errorf(ctx, "branch not found: %s", branch)
 		}
-		return "", fmt.Errorf("git checkout: %s", strings.TrimSpace(stderr.String()))
+		return "", errors.Errorf(ctx, "git checkout: %s", strings.TrimSpace(stderr.String()))
 	}
 
 	return clonePath, nil
@@ -122,20 +127,20 @@ func (m *worktreeManager) validateRepoPath(ctx context.Context, repoPath string)
 	// Check path exists
 	info, err := os.Stat(repoPath)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("local path not found: %s", repoPath)
+		return errors.Errorf(ctx, "local path not found: %s", repoPath)
 	}
 	if err != nil {
 		return errors.Wrap(ctx, err, "stat path failed")
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("not a directory: %s", repoPath)
+		return errors.Errorf(ctx, "not a directory: %s", repoPath)
 	}
 
 	// Check if it's a git repo
 	gitDir := filepath.Join(repoPath, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
-		return fmt.Errorf("not a git repo: %s", repoPath)
+		return errors.Errorf(ctx, "not a git repo: %s", repoPath)
 	}
 
 	return nil
@@ -160,8 +165,25 @@ func (m *worktreeManager) runGit(
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("git %s: %s", args[0], strings.TrimSpace(stderr.String()))
+		return errors.Errorf(ctx, "git %s: %s", args[0], strings.TrimSpace(stderr.String()))
 	}
 
 	return nil
+}
+
+var branchNameRegexp = regexp.MustCompile(`^[a-zA-Z0-9._/@\-]+$`)
+
+// isValidBranchName returns true if b is a safe, well-formed git branch name.
+// Rejects empty strings, names starting with "-", and names containing "..".
+func isValidBranchName(b string) bool {
+	if b == "" {
+		return false
+	}
+	if strings.HasPrefix(b, "-") {
+		return false
+	}
+	if strings.Contains(b, "..") {
+		return false
+	}
+	return branchNameRegexp.MatchString(b)
 }

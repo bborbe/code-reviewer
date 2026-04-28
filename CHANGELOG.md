@@ -8,6 +8,11 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.18
+
+- fix: validate branch names before `git checkout` in `CreateClone` to prevent argument injection via hyphen-prefixed or traversal branch names
+- refactor: replace all `fmt.Errorf` calls in `agent/pr-reviewer/pkg/git/git.go` with `errors.Errorf`/`errors.Wrapf` from `github.com/bborbe/errors`
+
 ## v0.16.17
 
 - refactor: replace `oauth2.StaticTokenSource` + `context.Background()` with `gogithub.NewClient(nil).WithAuthToken(token)` in `watcher/github/pkg/githubclient.go`
