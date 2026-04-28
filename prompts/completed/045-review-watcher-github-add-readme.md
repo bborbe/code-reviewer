@@ -1,11 +1,12 @@
 ---
-status: committing
+status: completed
 summary: Created watcher/github/README.md with env vars, cursor mechanism, and pr-reviewer relationship; added watcher/github entry to root README Layout section; updated CHANGELOG.md with Unreleased entry.
 container: code-reviewer-045-review-watcher-github-add-readme
 dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T14:51:25Z"
 started: "2026-04-28T14:57:39Z"
+completed: "2026-04-28T14:59:37Z"
 ---
 
 <summary>
