@@ -1,7 +1,11 @@
 ---
-status: approved
+status: committing
+summary: Replaced oauth2.StaticTokenSource + context.Background() with gogithub.NewClient(nil).WithAuthToken(token) in watcher/github/pkg/githubclient.go, removing the golang.org/x/oauth2 import.
+container: code-reviewer-051-review-watcher-github-fix-github-client-with-auth-token
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-28T00:00:00Z"
 queued: "2026-04-28T15:19:27Z"
+started: "2026-04-28T15:50:05Z"
 ---
 
 <summary>

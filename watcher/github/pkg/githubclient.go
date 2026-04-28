@@ -12,7 +12,6 @@ import (
 
 	"github.com/bborbe/errors"
 	gogithub "github.com/google/go-github/v62/github"
-	"golang.org/x/oauth2"
 )
 
 // PullRequest holds the fields the watcher needs from a GitHub PR.
@@ -55,10 +54,8 @@ type GitHubClient interface {
 
 // NewGitHubClient returns a GitHubClient backed by the real GitHub API.
 func NewGitHubClient(token string) GitHubClient {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	httpClient := oauth2.NewClient(context.Background(), ts)
 	return &githubClient{
-		client: gogithub.NewClient(httpClient),
+		client: gogithub.NewClient(nil).WithAuthToken(token),
 	}
 }
 

@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.16.17
+
+- refactor: replace `oauth2.StaticTokenSource` + `context.Background()` with `gogithub.NewClient(nil).WithAuthToken(token)` in `watcher/github/pkg/githubclient.go`
+
 ## v0.16.16
 
 - fix: validate `REPO_SCOPE` env var against `^[a-zA-Z0-9_.-]+$` at startup in `watcher/github` to prevent query injection via malformed scope values
