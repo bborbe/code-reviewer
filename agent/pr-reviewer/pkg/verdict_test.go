@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package verdict_test
+package pkg_test
 
 import (
 	"strings"
@@ -10,17 +10,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/verdict"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("Parse", func() {
 	var (
 		reviewText string
-		result     verdict.Result
+		result     pkg.Result
 	)
 
 	JustBeforeEach(func() {
-		result = verdict.Parse(reviewText)
+		result = pkg.ParseVerdict(reviewText)
 	})
 
 	Context("empty review text", func() {
@@ -29,7 +29,7 @@ var _ = Describe("Parse", func() {
 		})
 
 		It("returns VerdictComment", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictComment))
+			Expect(result.Verdict).To(Equal(pkg.VerdictComment))
 		})
 
 		It("returns reason 'empty review text'", func() {
@@ -43,7 +43,7 @@ var _ = Describe("Parse", func() {
 		})
 
 		It("returns VerdictComment", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictComment))
+			Expect(result.Verdict).To(Equal(pkg.VerdictComment))
 		})
 
 		It("returns reason 'unparseable review format'", func() {
@@ -60,7 +60,7 @@ var _ = Describe("Parse", func() {
 		})
 
 		It("returns VerdictRequestChanges", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason 'must-fix items found'", func() {
@@ -80,7 +80,7 @@ var _ = Describe("Parse", func() {
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -100,7 +100,7 @@ None identified.
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -120,7 +120,7 @@ none
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -139,7 +139,7 @@ none
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -161,7 +161,7 @@ none
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix section'", func() {
@@ -177,7 +177,7 @@ none
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix section'", func() {
@@ -193,7 +193,7 @@ none
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix section'", func() {
@@ -209,7 +209,7 @@ none
 		})
 
 		It("returns VerdictRequestChanges", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason 'must-fix items found'", func() {
@@ -229,7 +229,7 @@ None
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -245,7 +245,7 @@ None
 		})
 
 		It("returns VerdictRequestChanges", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 	})
 
@@ -261,7 +261,7 @@ No issues found.
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -281,7 +281,7 @@ No issues found.
 		})
 
 		It("returns VerdictRequestChanges", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason 'must-fix items found'", func() {
@@ -309,7 +309,7 @@ None.
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -345,7 +345,7 @@ Overall good work!`
 		})
 
 		It("returns VerdictApprove", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason 'no must-fix items'", func() {
@@ -363,7 +363,7 @@ Some review content here.
 		})
 
 		It("returns VerdictApprove from JSON", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason from JSON", func() {
@@ -383,7 +383,7 @@ Some review content here.
 		})
 
 		It("returns VerdictRequestChanges from JSON", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason from JSON", func() {
@@ -401,7 +401,7 @@ Some content.
 		})
 
 		It("returns VerdictComment from JSON", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictComment))
+			Expect(result.Verdict).To(Equal(pkg.VerdictComment))
 		})
 
 		It("returns reason from JSON", func() {
@@ -419,7 +419,7 @@ Some content.
 		})
 
 		It("returns VerdictRequestChanges from heuristic", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason from heuristic", func() {
@@ -437,7 +437,7 @@ Some content.
 		})
 
 		It("returns VerdictApprove from heuristic", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason from heuristic", func() {
@@ -455,7 +455,7 @@ Some content.
 		})
 
 		It("returns VerdictApprove from heuristic", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason from heuristic", func() {
@@ -475,7 +475,7 @@ None
 		})
 
 		It("returns VerdictApprove from heuristic", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictApprove))
+			Expect(result.Verdict).To(Equal(pkg.VerdictApprove))
 		})
 
 		It("returns reason from heuristic", func() {
@@ -504,7 +504,7 @@ None
 		})
 
 		It("ignores JSON in middle and uses heuristic", func() {
-			Expect(result.Verdict).To(Equal(verdict.VerdictRequestChanges))
+			Expect(result.Verdict).To(Equal(pkg.VerdictRequestChanges))
 		})
 
 		It("returns reason from heuristic", func() {
@@ -520,7 +520,7 @@ var _ = Describe("StripJSONVerdict", func() {
 	)
 
 	JustBeforeEach(func() {
-		stripped = verdict.StripJSONVerdict(reviewText)
+		stripped = pkg.StripJSONVerdict(reviewText)
 	})
 
 	Context("removes JSON verdict on bare line", func() {

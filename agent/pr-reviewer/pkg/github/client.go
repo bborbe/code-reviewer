@@ -15,7 +15,7 @@ import (
 
 	"github.com/bborbe/errors"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/verdict"
+	prpkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 // PRBranches holds the source and target branch names of a pull request.
@@ -35,7 +35,7 @@ type Client interface {
 		owner, repo string,
 		number int,
 		body string,
-		verdict verdict.Verdict,
+		verdict prpkg.Verdict,
 	) error
 }
 
@@ -138,11 +138,11 @@ func (c *ghClient) SubmitReview(
 	owner, repo string,
 	number int,
 	body string,
-	v verdict.Verdict,
+	v prpkg.Verdict,
 ) error {
 	// Only approve and request-changes are supported
 	// For comment verdict, caller should use PostComment instead
-	if v != verdict.VerdictApprove && v != verdict.VerdictRequestChanges {
+	if v != prpkg.VerdictApprove && v != prpkg.VerdictRequestChanges {
 		return errors.Errorf(
 			ctx,
 			"unsupported verdict for SubmitReview: %s (use PostComment instead)",
@@ -155,7 +155,7 @@ func (c *ghClient) SubmitReview(
 
 	args := []string{"pr", "review", numberArg, "--repo", repoArg}
 
-	if v == verdict.VerdictApprove {
+	if v == prpkg.VerdictApprove {
 		args = append(args, "--approve")
 	} else {
 		args = append(args, "--request-changes")

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package config
+package pkg
 
 import (
 	"context"
@@ -114,7 +114,7 @@ func (c *Config) ResolvedContainerImage() string {
 
 // Loader loads configuration from a source.
 //
-//counterfeiter:generate -o ../../mocks/config-loader.go --fake-name ConfigLoader . Loader
+//counterfeiter:generate -o ../mocks/config-loader.go --fake-name ConfigLoader . Loader
 type Loader interface {
 	Load(ctx context.Context) (*Config, error)
 }

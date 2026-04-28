@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package review_test
+package pkg_test
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/review"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("DockerReviewer", func() {
 	var (
 		ctx      context.Context
-		reviewer review.Reviewer
+		reviewer pkg.Reviewer
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		reviewer = review.NewDockerReviewer("test-image:latest")
+		reviewer = pkg.NewDockerReviewer("test-image:latest")
 	})
 
 	Describe("Review", func() {

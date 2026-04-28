@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package verdict
+package pkg
 
 import (
 	"encoding/json"
@@ -96,8 +96,8 @@ func parseJSONVerdict(reviewText string) (Result, bool) {
 	return Result{}, false
 }
 
-// Parse analyzes Claude review output and determines the appropriate verdict
-func Parse(reviewText string) Result {
+// ParseVerdict analyzes Claude review output and determines the appropriate verdict
+func ParseVerdict(reviewText string) Result {
 	// First try to extract JSON verdict
 	if result, ok := parseJSONVerdict(reviewText); ok {
 		return result

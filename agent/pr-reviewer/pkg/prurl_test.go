@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package prurl_test
+package pkg_test
 
 import (
 	"context"
@@ -10,18 +10,18 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prurl"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("Parse", func() {
 	var (
 		rawURL string
-		info   *prurl.PRInfo
+		info   *pkg.PRInfo
 		err    error
 	)
 
 	JustBeforeEach(func() {
-		info, err = prurl.Parse(context.Background(), rawURL)
+		info, err = pkg.ParsePRURL(context.Background(), rawURL)
 	})
 
 	Context("GitHub URLs", func() {
@@ -35,7 +35,7 @@ var _ = Describe("Parse", func() {
 			})
 
 			It("extracts platform correctly", func() {
-				Expect(info.Platform).To(Equal(prurl.PlatformGitHub))
+				Expect(info.Platform).To(Equal(pkg.PlatformGitHub))
 			})
 
 			It("extracts host correctly", func() {
@@ -73,7 +73,7 @@ var _ = Describe("Parse", func() {
 			})
 
 			It("extracts platform correctly", func() {
-				Expect(info.Platform).To(Equal(prurl.PlatformGitHub))
+				Expect(info.Platform).To(Equal(pkg.PlatformGitHub))
 			})
 
 			It("extracts owner correctly", func() {
@@ -161,7 +161,7 @@ var _ = Describe("Parse", func() {
 			})
 
 			It("extracts platform correctly", func() {
-				Expect(info.Platform).To(Equal(prurl.PlatformBitbucket))
+				Expect(info.Platform).To(Equal(pkg.PlatformBitbucket))
 			})
 
 			It("extracts host correctly", func() {
@@ -201,7 +201,7 @@ var _ = Describe("Parse", func() {
 			})
 
 			It("extracts platform correctly", func() {
-				Expect(info.Platform).To(Equal(prurl.PlatformBitbucket))
+				Expect(info.Platform).To(Equal(pkg.PlatformBitbucket))
 			})
 
 			It("extracts host correctly", func() {
@@ -237,7 +237,7 @@ var _ = Describe("Parse", func() {
 			})
 
 			It("extracts platform correctly", func() {
-				Expect(info.Platform).To(Equal(prurl.PlatformBitbucket))
+				Expect(info.Platform).To(Equal(pkg.PlatformBitbucket))
 			})
 
 			It("extracts project correctly", func() {

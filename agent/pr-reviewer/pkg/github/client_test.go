@@ -10,8 +10,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	prpkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/github"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/verdict"
 )
 
 var _ = Describe("Client", func() {
@@ -82,7 +82,7 @@ var _ = Describe("Client", func() {
 				"repo",
 				123,
 				"test review",
-				verdict.VerdictComment,
+				prpkg.VerdictComment,
 			)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("unsupported verdict"))
@@ -97,7 +97,7 @@ var _ = Describe("Client", func() {
 				"repo",
 				123,
 				"test review",
-				verdict.Verdict("unknown"),
+				prpkg.Verdict("unknown"),
 			)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("unsupported verdict"))
@@ -113,7 +113,7 @@ var _ = Describe("Client", func() {
 				"repo",
 				123,
 				"test review",
-				verdict.VerdictApprove,
+				prpkg.VerdictApprove,
 			)
 			Expect(err).To(HaveOccurred())
 		})

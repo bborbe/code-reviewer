@@ -2,13 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package steps holds custom agent steps for agent-pr-reviewer.
-//
-// claude.NewAgentStep covers the planning + execution phases (single
-// Claude call per phase, fixed NextPhase). The ai_review phase needs a
-// conditional NextPhase based on the parsed verdict ("pass" → done,
-// anything else → human_review), so it lives here as a custom step.
-package steps
+package pkg
 
 import (
 	"context"

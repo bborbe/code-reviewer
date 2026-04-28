@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package review
+package pkg
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 
 // Reviewer runs a code review using the claude CLI.
 //
-//counterfeiter:generate -o ../../mocks/reviewer.go --fake-name Reviewer . Reviewer
+//counterfeiter:generate -o ../mocks/reviewer.go --fake-name Reviewer . Reviewer
 type Reviewer interface {
 	Review(ctx context.Context, worktreePath string, command string, model string) (string, error)
 }

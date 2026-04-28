@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package steps_test
+package pkg_test
 
 import (
 	"context"
@@ -14,13 +14,13 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/mocks"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/steps"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("ExtractVerdict", func() {
 	DescribeTable("parses verdict from various LLM response shapes",
 		func(input, wantVerdict, wantReason string, wantOK bool) {
-			got, err := steps.ExtractVerdictForTest(input)
+			got, err := pkg.ExtractVerdictForTest(input)
 			if !wantOK {
 				Expect(err).To(HaveOccurred())
 				return
@@ -89,7 +89,7 @@ var _ = Describe("reviewStep", func() {
 		ctx = context.Background()
 		runner = &mocks.ClaudeRunnerMock{}
 		instructions = claudelib.Instructions{}
-		step = steps.NewReviewStep(runner, instructions)
+		step = pkg.NewReviewStep(runner, instructions)
 	})
 
 	Describe("Name", func() {

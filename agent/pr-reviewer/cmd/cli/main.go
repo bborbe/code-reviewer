@@ -14,14 +14,10 @@ import (
 
 	"github.com/bborbe/errors"
 
+	prpkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/bitbucket"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/config"
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/git"
 	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/github"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prurl"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/review"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/verdict"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/version"
 )
 
 func main() {
@@ -36,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Printf("code-reviewer %s\n", version.Version)
+		fmt.Printf("code-reviewer %s\n", prpkg.Version)
 		os.Exit(0)
 	}
 
@@ -61,11 +57,11 @@ func run(ctx context.Context, verbose bool, commentOnly bool) error {
 	rawURL := flag.Arg(0)
 
 	// Log version
-	logVerbose(verbose, "code-reviewer %s", version.Version)
+	logVerbose(verbose, "code-reviewer %s", prpkg.Version)
 
 	// Parse PR URL
 	logVerbose(verbose, "parsing URL: %s", rawURL)
-	prInfo, err := prurl.Parse(ctx, rawURL)
+	prInfo, err := prpkg.ParsePRURL(ctx, rawURL)
 	if err != nil {
 		return err
 	}
@@ -73,7 +69,7 @@ func run(ctx context.Context, verbose bool, commentOnly bool) error {
 	// Load config
 	configPath := "~/.code-reviewer.yaml"
 	logVerbose(verbose, "loading config: %s", configPath)
-	loader := config.NewFileLoader(configPath)
+	loader := prpkg.NewFileLoader(configPath)
 	cfg, err := loader.Load(ctx)
 	if err != nil {
 		return err
@@ -86,14 +82,14 @@ func run(ctx context.Context, verbose bool, commentOnly bool) error {
 	}
 
 	// Expand home directory in path
-	repoPath := config.ExpandHome(repoInfo.Path)
+	repoPath := prpkg.ExpandHome(repoInfo.Path)
 	logVerbose(verbose, "repo: %s", repoPath)
 
 	// Route based on platform
 	switch prInfo.Platform {
-	case prurl.PlatformGitHub:
+	case prpkg.PlatformGitHub:
 		return runGitHub(ctx, verbose, commentOnly, cfg, prInfo, repoPath, repoInfo)
-	case prurl.PlatformBitbucket:
+	case prpkg.PlatformBitbucket:
 		return runBitbucket(ctx, verbose, commentOnly, cfg, prInfo, repoPath, repoInfo)
 	default:
 		return fmt.Errorf("unsupported platform: %s", prInfo.Platform)
@@ -105,10 +101,10 @@ func runGitHub(
 	ctx context.Context,
 	verbose bool,
 	commentOnly bool,
-	cfg *config.Config,
-	prInfo *prurl.PRInfo,
+	cfg *prpkg.Config,
+	prInfo *prpkg.PRInfo,
 	repoPath string,
-	repoInfo *config.RepoInfo,
+	repoInfo *prpkg.RepoInfo,
 ) error {
 	// Resolve token and create client
 	resolvedToken := cfg.ResolvedGitHubToken()
@@ -117,7 +113,7 @@ func runGitHub(
 		"github token",
 		cfg.GitHub.Token,
 		resolvedToken,
-		config.DefaultGitHubToken,
+		prpkg.DefaultGitHubToken,
 	)
 	ghClient := github.NewGHClient(resolvedToken)
 
@@ -143,7 +139,7 @@ func runGitHub(
 	defer cleanup()
 
 	// Create reviewer
-	reviewer := review.NewDockerReviewer(cfg.ResolvedContainerImage())
+	reviewer := prpkg.NewDockerReviewer(cfg.ResolvedContainerImage())
 
 	// Run review
 	reviewCommand := buildReviewCommand(repoInfo.ReviewCommand, branches.Target)
@@ -176,10 +172,10 @@ func runBitbucket(
 	ctx context.Context,
 	verbose bool,
 	commentOnly bool,
-	cfg *config.Config,
-	prInfo *prurl.PRInfo,
+	cfg *prpkg.Config,
+	prInfo *prpkg.PRInfo,
 	repoPath string,
-	repoInfo *config.RepoInfo,
+	repoInfo *prpkg.RepoInfo,
 ) error {
 	// Resolve token and create client
 	resolvedToken := cfg.ResolvedBitbucketToken()
@@ -188,7 +184,7 @@ func runBitbucket(
 		"bitbucket token",
 		cfg.Bitbucket.Token,
 		resolvedToken,
-		config.DefaultBitbucketToken,
+		prpkg.DefaultBitbucketToken,
 	)
 	if resolvedToken == "" {
 		return fmt.Errorf("BITBUCKET_TOKEN not set")
@@ -223,7 +219,7 @@ func runBitbucket(
 	defer cleanup()
 
 	// Create reviewer
-	reviewer := review.NewDockerReviewer(cfg.ResolvedContainerImage())
+	reviewer := prpkg.NewDockerReviewer(cfg.ResolvedContainerImage())
 
 	// Run review
 	reviewCommand := buildReviewCommand(repoInfo.ReviewCommand, branches.Target)
@@ -296,10 +292,10 @@ func createCloneAndFetch(
 // runReview executes the Claude review and returns the review text and verdict.
 func runReview(
 	ctx context.Context,
-	reviewer review.Reviewer,
+	reviewer prpkg.Reviewer,
 	worktreePath, reviewCommand, model string,
-	prInfo *prurl.PRInfo,
-) (string, verdict.Result, error) {
+	prInfo *prpkg.PRInfo,
+) (string, prpkg.Result, error) {
 	// Run review
 	logAlways(
 		"reviewing PR #%d (%s/%s) (this may take a few minutes)...",
@@ -309,18 +305,18 @@ func runReview(
 	)
 	reviewText, err := reviewer.Review(ctx, worktreePath, reviewCommand, model)
 	if err != nil {
-		return "", verdict.Result{}, errors.Wrap(ctx, err, "review failed")
+		return "", prpkg.Result{}, errors.Wrap(ctx, err, "review failed")
 	}
 
 	// Always print review to stdout
 	fmt.Println(reviewText)
 
 	// Parse verdict
-	result := verdict.Parse(reviewText)
+	result := prpkg.ParseVerdict(reviewText)
 	logAlways("verdict: %s (%s)", result.Verdict, result.Reason)
 
 	// Strip JSON verdict block before posting to PR
-	cleanedText := verdict.StripJSONVerdict(reviewText)
+	cleanedText := prpkg.StripJSONVerdict(reviewText)
 
 	return cleanedText, result, nil
 }
@@ -330,9 +326,9 @@ func submitGitHubReview(
 	ctx context.Context,
 	commentOnly bool,
 	autoApprove bool,
-	result verdict.Result,
+	result prpkg.Result,
 	ghClient github.Client,
-	prInfo *prurl.PRInfo,
+	prInfo *prpkg.PRInfo,
 	reviewText string,
 ) error {
 	// --comment-only flag overrides verdict
@@ -341,7 +337,7 @@ func submitGitHubReview(
 	}
 
 	// Handle approve verdict based on autoApprove setting
-	if result.Verdict == verdict.VerdictApprove {
+	if result.Verdict == prpkg.VerdictApprove {
 		return handleGitHubApprove(
 			ctx,
 			autoApprove,
@@ -353,7 +349,7 @@ func submitGitHubReview(
 	}
 
 	// Submit structured review for request-changes
-	if result.Verdict == verdict.VerdictRequestChanges {
+	if result.Verdict == prpkg.VerdictRequestChanges {
 		return submitGitHubStructuredReview(
 			ctx,
 			result,
@@ -371,7 +367,7 @@ func submitGitHubReview(
 func postGitHubComment(
 	ctx context.Context,
 	ghClient github.Client,
-	prInfo *prurl.PRInfo,
+	prInfo *prpkg.PRInfo,
 	reviewText string,
 ) error {
 	logAlways("posting comment...")
@@ -392,9 +388,9 @@ func postGitHubComment(
 func handleGitHubApprove(
 	ctx context.Context,
 	autoApprove bool,
-	result verdict.Result,
+	result prpkg.Result,
 	ghClient github.Client,
-	prInfo *prurl.PRInfo,
+	prInfo *prpkg.PRInfo,
 	reviewText string,
 ) error {
 	if !autoApprove {
@@ -407,9 +403,9 @@ func handleGitHubApprove(
 // submitGitHubStructuredReview submits a structured review (approve/request-changes).
 func submitGitHubStructuredReview(
 	ctx context.Context,
-	result verdict.Result,
+	result prpkg.Result,
 	ghClient github.Client,
-	prInfo *prurl.PRInfo,
+	prInfo *prpkg.PRInfo,
 	reviewText string,
 ) error {
 	logAlways("submitting review: %s...", result.Verdict)
@@ -432,9 +428,9 @@ func submitBitbucketReview(
 	ctx context.Context,
 	commentOnly bool,
 	autoApprove bool,
-	result verdict.Result,
+	result prpkg.Result,
 	bbClient bitbucket.Client,
-	prInfo *prurl.PRInfo,
+	prInfo *prpkg.PRInfo,
 	reviewText string,
 	username string,
 ) error {
@@ -458,7 +454,7 @@ func submitBitbucketReview(
 	}
 
 	// Submit verdict for approve/request-changes
-	if result.Verdict == verdict.VerdictApprove {
+	if result.Verdict == prpkg.VerdictApprove {
 		if !autoApprove {
 			logAlways("skipping auto-approve (disabled in config)")
 			logAlways("done")
@@ -478,7 +474,7 @@ func submitBitbucketReview(
 		return nil
 	}
 
-	if result.Verdict == verdict.VerdictRequestChanges {
+	if result.Verdict == prpkg.VerdictRequestChanges {
 		if username == "" {
 			logAlways("skipping needs-work verdict (bitbucket.username not configured)")
 			logAlways("done")

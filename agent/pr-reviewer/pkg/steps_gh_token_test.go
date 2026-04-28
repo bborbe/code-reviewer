@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package steps_test
+package pkg_test
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/steps"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("GHTokenCheckStep", func() {
@@ -30,7 +30,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 	})
 
 	It("returns needs_input when token is empty", func() {
-		step := steps.NewGHTokenCheckStep("")
+		step := pkg.NewGHTokenCheckStep("")
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusNeedsInput))
@@ -45,7 +45,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusDone))
@@ -58,7 +58,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("revoked-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("revoked-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusNeedsInput))
@@ -73,7 +73,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("bad-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("bad-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusNeedsInput))
@@ -87,7 +87,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusFailed))
@@ -102,7 +102,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusFailed))
@@ -114,7 +114,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 		srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusFailed))
@@ -127,7 +127,7 @@ var _ = Describe("GHTokenCheckStep", func() {
 		}))
 		defer srv.Close()
 
-		step := steps.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
+		step := pkg.NewGHTokenCheckStepWithURLForTest("good-token", srv.URL)
 		got, err := step.Run(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(got.Status).To(Equal(agentlib.AgentStatusFailed))
@@ -135,14 +135,14 @@ var _ = Describe("GHTokenCheckStep", func() {
 	})
 
 	It("ShouldRun always returns true", func() {
-		step := steps.NewGHTokenCheckStep("anything")
+		step := pkg.NewGHTokenCheckStep("anything")
 		ok, err := step.ShouldRun(ctx, md)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(ok).To(BeTrue())
 	})
 
 	It("Name returns the step identifier", func() {
-		step := steps.NewGHTokenCheckStep("anything")
+		step := pkg.NewGHTokenCheckStep("anything")
 		Expect(step.Name()).To(Equal("verify-gh-token"))
 	})
 })

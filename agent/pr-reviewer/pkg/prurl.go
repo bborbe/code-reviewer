@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package prurl
+package pkg
 
 import (
 	"context"
@@ -35,13 +35,13 @@ type PRInfo struct {
 	RepoURL  string
 }
 
-// Parse parses a PR URL and extracts platform, host, owner/project, repo, PR number, and repo URL.
+// ParsePRURL parses a PR URL and extracts platform, host, owner/project, repo, PR number, and repo URL.
 // Supports:
 //   - GitHub: https://github.com/{owner}/{repo}/pull/{number}
 //   - Bitbucket Server: https://{host}/projects/{project}/repos/{repo}/pull-requests/{number}[/overview]
 //
 // Returns error for unrecognized URL patterns or non-HTTPS URLs.
-func Parse(ctx context.Context, rawURL string) (*PRInfo, error) {
+func ParsePRURL(ctx context.Context, rawURL string) (*PRInfo, error) {
 	if rawURL == "" {
 		return nil, errors.Errorf(ctx, "unsupported URL format: %s", rawURL)
 	}

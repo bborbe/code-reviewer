@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.17.4
+
+- refactor: flatten `agent/pr-reviewer/pkg/` by collapsing single-consumer subpackages (`config`, `prurl`, `review`, `verdict`, `version`, `steps`) into flat files in `pkg/`, and merging `pkg/prompts/{execution,planning,review}/` into a single `pkg/prompts/` package
+
 ## v0.17.3
 
 - test: add Ginkgo/Gomega tests for `reviewStep.Name`, `ShouldRun`, and `Run` in `agent/pr-reviewer/pkg/steps`, covering all four `Run` branches (runner error, unparseable output, verdict pass, verdict fail); coverage reaches 93.3%

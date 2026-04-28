@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package config_test
+package pkg_test
 
 import (
 	"context"
@@ -12,15 +12,15 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/config"
+	pkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
 )
 
 var _ = Describe("Config", func() {
 	var (
 		ctx    context.Context
-		loader config.Loader
+		loader pkg.Loader
 		tmpDir string
-		cfg    *config.Config
+		cfg    *pkg.Config
 		err    error
 	)
 
@@ -33,7 +33,7 @@ var _ = Describe("Config", func() {
 		var configPath string
 
 		JustBeforeEach(func() {
-			loader = config.NewFileLoader(configPath)
+			loader = pkg.NewFileLoader(configPath)
 			cfg, err = loader.Load(ctx)
 		})
 
@@ -487,12 +487,12 @@ repos:
 	Describe("FindRepo", func() {
 		var (
 			repoURL  string
-			repoInfo *config.RepoInfo
+			repoInfo *pkg.RepoInfo
 		)
 
 		BeforeEach(func() {
-			cfg = &config.Config{
-				Repos: []config.RepoConfig{
+			cfg = &pkg.Config{
+				Repos: []pkg.RepoConfig{
 					{
 						URL:           "https://github.com/bborbe/teamvault-docker",
 						Path:          "/home/user/teamvault-docker",
@@ -601,8 +601,8 @@ repos:
 	Describe("ResolvedModel", func() {
 		Context("when model field is not set", func() {
 			BeforeEach(func() {
-				cfg = &config.Config{
-					Repos: []config.RepoConfig{
+				cfg = &pkg.Config{
+					Repos: []pkg.RepoConfig{
 						{
 							URL:  "https://github.com/bborbe/teamvault-docker",
 							Path: "/home/user/teamvault-docker",
@@ -618,9 +618,9 @@ repos:
 
 		Context("when model field is set to custom value", func() {
 			BeforeEach(func() {
-				cfg = &config.Config{
+				cfg = &pkg.Config{
 					Model: "opus",
-					Repos: []config.RepoConfig{
+					Repos: []pkg.RepoConfig{
 						{
 							URL:  "https://github.com/bborbe/teamvault-docker",
 							Path: "/home/user/teamvault-docker",
@@ -636,9 +636,9 @@ repos:
 
 		Context("when model field is empty string", func() {
 			BeforeEach(func() {
-				cfg = &config.Config{
+				cfg = &pkg.Config{
 					Model: "",
-					Repos: []config.RepoConfig{
+					Repos: []pkg.RepoConfig{
 						{
 							URL:  "https://github.com/bborbe/teamvault-docker",
 							Path: "/home/user/teamvault-docker",

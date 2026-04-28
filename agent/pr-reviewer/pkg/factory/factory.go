@@ -21,10 +21,8 @@ import (
 	"github.com/bborbe/vault-cli/pkg/domain"
 	"github.com/golang/glog"
 
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/execution"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/planning"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts/review"
-	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/steps"
+	prpkg "github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg"
+	"github.com/bborbe/code-reviewer/agent/pr-reviewer/pkg/prompts"
 )
 
 const serviceName = "agent-pr-reviewer"
@@ -137,24 +135,24 @@ func CreateAgent(
 	ghToken string,
 	env map[string]string,
 ) AgentRunner {
-	tokenCheck := steps.NewGHTokenCheckStep(ghToken)
+	tokenCheck := prpkg.NewGHTokenCheckStep(ghToken)
 	planningStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
 		Name:          "pr-plan",
 		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, env, planningTools),
-		Instructions:  planning.BuildInstructions(),
+		Instructions:  prompts.BuildPlanningInstructions(),
 		OutputSection: "## Plan",
 		NextPhase:     "in_progress",
 	})
 	executionStep := claudelib.NewAgentStep(claudelib.AgentStepConfig{
 		Name:          "pr-execute",
 		Runner:        CreateClaudeRunner(claudeConfigDir, agentDir, model, env, executionTools),
-		Instructions:  execution.BuildInstructions(),
+		Instructions:  prompts.BuildExecutionInstructions(),
 		OutputSection: "## Review",
 		NextPhase:     "ai_review",
 	})
-	reviewStep := steps.NewReviewStep(
+	reviewStep := prpkg.NewReviewStep(
 		CreateClaudeRunner(claudeConfigDir, agentDir, model, env, reviewTools),
-		review.BuildInstructions(),
+		prompts.BuildReviewInstructions(),
 	)
 	return agentlib.NewAgent(
 		agentlib.NewPhase("planning", tokenCheck, planningStep),

@@ -2,6 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package steps
+package pkg
 
-//counterfeiter:generate -o ../../mocks/claude-runner.go --fake-name ClaudeRunnerMock github.com/bborbe/agent/lib/claude.ClaudeRunner
+//counterfeiter:generate -o ../mocks/claude-runner.go --fake-name ClaudeRunnerMock github.com/bborbe/agent/lib/claude.ClaudeRunner
