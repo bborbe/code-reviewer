@@ -8,6 +8,10 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.19.1
+
+- chore: raise `ephemeral-storage` from `2Gi` to `5Gi` in both requests and limits for agent-pr-reviewer K8s Config CR to accommodate full-size git clones on overlayfs
+
 ## v0.19.0
 
 - feat: wire `RepoManager` into the execution phase — `checkoutExecutionStep` checks out the target ref as an on-disk worktree and runs Claude in that directory; update `CreateAgent` to accept `git.RepoManager`; add `REPOS_PATH`/`WORK_PATH` env vars to K8s and run-task entry points with startup `PruneAllWorktrees`; narrow `executionTools` to read-only git operations; replace `gh pr diff` in `execution_workflow.md` with on-disk worktree inspection instructions

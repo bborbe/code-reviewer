@@ -1,8 +1,12 @@
 ---
-status: approved
+status: committing
 spec: [010-git-checkout-review-workdir]
+summary: Raised ephemeral-storage from 2Gi to 5Gi in both requests and limits of agent/pr-reviewer/k8s/agent-pr-reviewer.yaml
+container: code-reviewer-067-spec-010-bump-ephemeral-storage
+dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-29T09:00:00Z"
 queued: "2026-04-29T12:10:41Z"
+started: "2026-04-29T12:27:17Z"
 branch: dark-factory/git-checkout-review-workdir
 ---
 
