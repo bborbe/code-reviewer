@@ -1,10 +1,11 @@
 ---
-status: approved
+status: prompted
 tags:
     - dark-factory
     - spec
 approved: "2026-04-29T11:25:04Z"
 generating: "2026-04-29T11:26:52Z"
+prompted: "2026-04-29T11:39:07Z"
 branch: dark-factory/git-checkout-review-workdir
 ---
 
@@ -42,8 +43,8 @@ After this work, the execution phase of the agent runs inside a real git working
 4. **Execution phase runs inside the worktree.** The factory wires the repo manager into the execution phase only; the phase reads `clone_url` and `ref` from the task frontmatter, ensures the bare clone and worktree, and uses the resulting path as the working directory before invoking the review command.
 5. **Planning and ai_review phases are unchanged.** Both still operate on `gh pr diff` output via the GitHub API and do not touch the workdir.
 6. **Read-only invariant is enforced in two layers.** The execution phase's allowed-tools list permits only `git clone`, `git fetch`, `git worktree add`, `git worktree prune`, and `cd` — and explicitly excludes `git commit`, `git push`, `git checkout -b`, `git branch`, and `git reset`. The execution-phase prompt repeats this guard in plain language: the workdir is a temporary checkout of an existing ref and must not be modified, committed, pushed, or branched.
-7. **Paths are configurable per entry point but locked in K8s mode.** A configuration object exposes `reposPath` and `workPath`. K8s mode defaults to `/repos` and `/work` (overridable via `REPOS_PATH` / `WORK_PATH` env vars). `run-task` defaults to repo-local `./.cache/repos` and `./.cache/work`. CLI defaults to `~/.cache/code-reviewer/repos` and `~/.cache/code-reviewer/work`, with a yaml override.
-8. **Container image and Job spec accommodate the layout.** The image creates `/repos` and `/work` owned by the non-root run user at build time. The Job's `ephemeral-storage` is raised from 2Gi to 5Gi to fit a full-size worktree under overlayfs (the value drops back when `/repos` becomes a PVC and worktree objects are hardlinked).
+7. **Paths are configurable in the agent pipeline modes.** A configuration object exposes `reposPath` and `workPath`. K8s mode defaults to `/repos` and `/work` (overridable via `REPOS_PATH` / `WORK_PATH` env vars). `run-task` defaults to `~/.cache/code-reviewer/repos` and `~/.cache/code-reviewer/work` (env override). The standalone CLI (`cmd/cli`) is **out of scope for this spec** — it uses `DockerReviewer` + `WorktreeManager.CreateClone`, a separate code path for local Docker-based review; integrating CLI into the `RepoManager` flow is a follow-up if and when CLI moves onto the agent pipeline.
+8. **Job spec accommodates the layout.** The Job's `ephemeral-storage` is raised from 2Gi to 5Gi to fit a full-size worktree under overlayfs (the value drops back when `/repos` becomes a PVC and worktree objects are hardlinked). No Dockerfile change is needed: the container runs as root (no `USER` directive, no `securityContext`), so the repo manager creates `/repos` and `/work` at runtime via `os.MkdirAll` — same code path on K8s, run-task, and CLI.
 9. **No diff-based fallback in the execution phase.** The execution phase exclusively uses the on-disk working tree. There is no `gh pr diff` (or any other text-only) fallback path in the code. If the bare clone, fetch, or worktree step fails, the phase fails loud and returns an error to the controller — the controller decides retry policy. Degrading silently to a less-thorough review is not an option.
 
 ## Constraints
@@ -99,8 +100,8 @@ After this work, the execution phase of the agent runs inside a real git working
 - [ ] The factory injects the repo manager into the execution phase only; planning and ai_review phases remain on the API-only path.
 - [ ] The execution phase's allowed-tools list permits only the read-only git operations enumerated in Desired Behavior #6 and excludes every write operation listed there.
 - [ ] The execution-phase prompt contains a plain-language read-only guard.
-- [ ] Defaults differ per entry mode: K8s `/repos` + `/work` (env-overridable), run-task `./.cache/repos` + `./.cache/work`, CLI `~/.cache/code-reviewer/{repos,work}` (yaml-overridable).
-- [ ] Container image creates `/repos` and `/work` owned by the run user.
+- [ ] Defaults differ per entry mode: K8s `/repos` + `/work` (env-overridable); run-task defaults to `~/.cache/code-reviewer/{repos,work}` (env-overridable). CLI (`cmd/cli`) is out of scope for this spec.
+- [ ] Repo manager creates `/repos` and `/work` at runtime via `os.MkdirAll` (container runs as root; no Dockerfile change needed).
 - [ ] Job's `ephemeral-storage` is set to 5Gi.
 - [ ] Unit tests cover: clone path, fetch path, half-clone recovery, worktree create path, worktree reuse path, ref pinning, and stale-worktree pruning — using `t.TempDir()` for isolation.
 - [ ] All existing tests pass; `make precommit` from `agent/pr-reviewer/` is green.
@@ -112,9 +113,7 @@ After this work, the execution phase of the agent runs inside a real git working
 cd agent/pr-reviewer && make precommit
 ```
 
-Manual smoke (CLI mode): run a review against a known PR; confirm `~/.cache/code-reviewer/repos/github.com/<owner>/<repo>.git` exists after first run, and `~/.cache/code-reviewer/work/<task_id>` is created with the expected `ref` checked out.
-
-Manual smoke (run-task mode): same flow under `./.cache/...`; confirm a second run reuses the bare and does an incremental fetch.
+Manual smoke (run-task mode): run a task locally; confirm `~/.cache/code-reviewer/repos/github.com/<owner>/<repo>.git` exists after first run and `~/.cache/code-reviewer/work/<task_id>` is created with the expected `ref` checked out. Re-run with the same repo to confirm incremental fetch.
 
 K8s smoke (dev): trigger a task; confirm the execution-phase logs show `cd /work/<task_id>`; confirm the pod's allowed-tools list (or its equivalent surfaced in logs) excludes write operations.
 
