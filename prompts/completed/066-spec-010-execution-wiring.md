@@ -1,5 +1,5 @@
 ---
-status: committing
+status: completed
 spec: [010-git-checkout-review-workdir]
 summary: 'Wired RepoManager into the execution phase: created checkoutExecutionStep that checks out the target ref as an on-disk worktree and runs Claude in that directory; narrowed executionTools to read-only git operations; updated execution_workflow.md to remove gh pr diff; updated CreateAgent to accept git.RepoManager; added REPOS_PATH/WORK_PATH env vars with startup PruneAllWorktrees to both entry points; updated factory_test.go call sites; added tests for ShouldRun and Run error branches'
 container: code-reviewer-066-spec-010-execution-wiring
@@ -7,6 +7,7 @@ dark-factory-version: v0.135.19-1-gc08c946
 created: "2026-04-29T09:00:00Z"
 queued: "2026-04-29T12:10:38Z"
 started: "2026-04-29T12:21:23Z"
+completed: "2026-04-29T12:27:16Z"
 branch: dark-factory/git-checkout-review-workdir
 ---
 
